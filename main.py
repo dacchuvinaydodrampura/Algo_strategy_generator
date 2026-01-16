@@ -25,20 +25,25 @@ from backtest_engine import run_backtest
 from consistency_filter import check_consistency
 from strategy_repository import store_strategy, get_stored_count
 from telegram_notifier import notify_strategy
+from flask import Flask
+import threading
 
+# Flask App for Render Web Service (Free Tier Hack)
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    """Keep-alive endpoint."""
+    return f"Strategy Engine Running | Stored: {get_stored_count()}", 200
 
 def run_cycle():
-    """
-    Run a single strategy research cycle.
-    
-    This is the main function called by cron.
-    """
+    """Run a single strategy research cycle."""
     start_time = time.time()
     
     print("=" * 60)
     print(f"🚀 Strategy Research Engine - Cycle Started")
     print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+    # ... rest of the logic ...
     
     # Validate configuration
     Config.validate()
@@ -55,24 +60,17 @@ def run_cycle():
         print(f"\n📝 Generating {Config.STRATEGIES_PER_CYCLE} strategies...")
         strategies = generate_strategies(Config.STRATEGIES_PER_CYCLE)
         generated = len(strategies)
-        print(f"   Generated: {generated}")
         
         # Step 2: Validate strategies
-        print(f"\n✅ Validating strategies...")
         valid_strategies = validate_strategies(strategies)
         validated = len(valid_strategies)
-        print(f"   Valid: {validated}/{generated}")
         
         if not valid_strategies:
             print("   No valid strategies to backtest")
             return
         
         # Step 3 & 4: Backtest and filter each strategy
-        print(f"\n📊 Backtesting and filtering...")
-        
         for strategy in valid_strategies:
-            print(f"\n   Testing: {strategy.name}")
-            
             # Backtest across all periods
             result = run_backtest(strategy)
             backtested += 1
@@ -82,7 +80,7 @@ def run_cycle():
             
             if is_consistent:
                 passed += 1
-                print(f"   ✅ PASSED all filters!")
+                print(f"   ✅ PASSED all filters: {strategy.name}")
                 
                 # Store strategy
                 store_strategy(strategy, result)
@@ -90,8 +88,6 @@ def run_cycle():
                 # Send Telegram notification
                 if notify_strategy(strategy, result):
                     notified += 1
-            else:
-                print(f"   ❌ Failed: {failures[0]}")
         
         # Summary
         elapsed = time.time() - start_time
@@ -109,13 +105,23 @@ def run_cycle():
         print(f"\n❌ Cycle failed with error: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
 
+def background_loop():
+    """Continuous loop for background execution."""
+    print("⏳ Starting background strategy loop...")
+    while True:
+        try:
+            run_cycle()
+        except Exception as e:
+            print(f"❌ Critical Error in Loop: {e}")
+        
+        # Sleep for 60 seconds (configurable)
+        print("💤 Sleeping for 60s...")
+        time.sleep(60)
 
-def main():
-    """Main entry point."""
-    run_cycle()
-
+# Start background thread when app starts
+threading.Thread(target=background_loop, daemon=True).start()
 
 if __name__ == "__main__":
-    main()
+    # Local development
+    app.run(host='0.0.0.0', port=8080)

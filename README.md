@@ -98,9 +98,40 @@ Strategy passes ONLY if:
 • 365D: +28.7%
 ```
 
-## 🔧 Render Configuration
+## 🚀 Render Deployment (Free Tier Hack)
 
-The `render.yaml` creates a cron job that runs every minute:
-- No infinite loop
-- Clean memory between runs
-- Auto-restart on failure
+Since Render Cron Jobs are paid, we use a **Web Service** with a keep-alive loop.
+
+### Step 1: Push to GitHub
+```bash
+git add .
+git commit -m "Switch to Free Tier Web Service"
+git push
+```
+
+### Step 2: Create Web Service on Render
+1. Go to [Render Dashboard](https://dashboard.render.com)
+2. Click **New → Web Service** (NOT Cron Job)
+3. Connect your repo
+4. Settings:
+   - **Name**: strategy-engine
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn main:app`
+   - **Plan**: Free
+
+### Step 3: Prevent Sleep (Crucial!)
+Render Free Tier spins down after 15 minutes of inactivity. To keep it running 24/7:
+1. Copy your Render URL (e.g., `https://strategy-engine.onrender.com`)
+2. Go to [UptimeRobot](https://uptimerobot.com) (Free)
+3. Create a new **HTTP Monitor**
+4. Paste your Render URL
+5. Set interval to **5 minutes**
+
+This ping keeps the background loop running forever for free.
+
+### Step 4: Environment Variables
+Add these in Render Dashboard:
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `STRATEGIES_PER_CYCLE` = 5

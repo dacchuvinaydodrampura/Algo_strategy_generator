@@ -1,10 +1,9 @@
 services:
-  - type: cron
+  - type: web
     name: strategy-research-engine
     runtime: python
-    schedule: "* * * * *"
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python main.py"
+    startCommand: "gunicorn main:app"
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
