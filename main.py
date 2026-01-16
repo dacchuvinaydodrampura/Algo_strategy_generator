@@ -13,20 +13,18 @@ Runs a single cycle:
 No infinite loop - designed for Render cron jobs.
 """
 
+import logging
 import sys
-import time
-from datetime import datetime
 
-# Import all modules
-from config import Config
-from strategy_generator import generate_strategies
-from strategy_validator import validate_strategies
-from backtest_engine import run_backtest
-from consistency_filter import check_consistency
-from strategy_repository import store_strategy, get_stored_count
-from telegram_notifier import notify_strategy
-from flask import Flask
-import threading
+# Configure logging to stdout (Crucial for Render Logs)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Flask App for Render Web Service (Free Tier Hack)
 app = Flask(__name__)
@@ -34,30 +32,30 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     """Keep-alive endpoint."""
+    logger.info("Health check ping received")
     return f"Strategy Engine Running | Stored: {get_stored_count()}", 200
 
 def run_cycle():
     """Run a single strategy research cycle."""
     start_time = time.time()
     
-    print("=" * 60)
-    print(f"🚀 Strategy Research Engine - Cycle Started")
-    print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+    logger.info(f"🚀 Strategy Research Engine - Cycle Started")
     # ... rest of the logic ...
     
-    # Validate configuration
-    Config.validate()
-    
-    # Stats for this cycle
-    generated = 0
-    validated = 0
-    backtested = 0
-    passed = 0
-    notified = 0
-    
     try:
+        # Validate configuration
+        Config.validate()
+        
+        # Stats for this cycle
+        generated = 0
+        validated = 0
+        backtested = 0
+        passed = 0
+        notified = 0
+
         # Step 1: Generate strategies
-        print(f"\n📝 Generating {Config.STRATEGIES_PER_CYCLE} strategies...")
+        logger.info(f"📝 Generating {Config.STRATEGIES_PER_CYCLE} strategies...")
         strategies = generate_strategies(Config.STRATEGIES_PER_CYCLE)
         generated = len(strategies)
         
@@ -66,7 +64,7 @@ def run_cycle():
         validated = len(valid_strategies)
         
         if not valid_strategies:
-            print("   No valid strategies to backtest")
+            logger.info("   No valid strategies to backtest")
             return
         
         # Step 3 & 4: Backtest and filter each strategy
@@ -80,7 +78,7 @@ def run_cycle():
             
             if is_consistent:
                 passed += 1
-                print(f"   ✅ PASSED all filters: {strategy.name}")
+                logger.info(f"   ✅ PASSED all filters: {strategy.name}")
                 
                 # Store strategy
                 store_strategy(strategy, result)
@@ -91,32 +89,30 @@ def run_cycle():
         
         # Summary
         elapsed = time.time() - start_time
-        print("\n" + "=" * 60)
-        print(f"📈 Cycle Complete - {elapsed:.1f}s")
-        print(f"   Generated:  {generated}")
-        print(f"   Validated:  {validated}")
-        print(f"   Backtested: {backtested}")
-        print(f"   Passed:     {passed}")
-        print(f"   Notified:   {notified}")
-        print(f"   Total Stored: {get_stored_count()}")
-        print("=" * 60)
+        logger.info("-" * 60)
+        logger.info(f"📈 Cycle Complete - {elapsed:.1f}s")
+        logger.info(f"   Gen: {generated} | Val: {validated} | B/T: {backtested} | Pass: {passed}")
+        logger.info("=" * 60)
         
     except Exception as e:
-        print(f"\n❌ Cycle failed with error: {e}")
+        logger.error(f"❌ Cycle failed with error: {e}")
         import traceback
         traceback.print_exc()
 
 def background_loop():
     """Continuous loop for background execution."""
-    print("⏳ Starting background strategy loop...")
+    # Small startup delay to ensure logs are ready
+    time.sleep(2)
+    logger.info("⏳ Starting background strategy loop...")
+    
     while True:
         try:
             run_cycle()
         except Exception as e:
-            print(f"❌ Critical Error in Loop: {e}")
+            logger.error(f"❌ Critical Error in Loop: {e}")
         
         # Sleep for 60 seconds (configurable)
-        print("💤 Sleeping for 60s...")
+        logger.info("💤 Sleeping for 60s...")
         time.sleep(60)
 
 # Start background thread when app starts
