@@ -16,7 +16,8 @@ No look-ahead bias. Uses only past data for signals.
 import numpy as np
 from typing import List, Dict, Optional
 from models import Strategy, Trade, PeriodResult, BacktestResult
-from data_provider import DataProvider, OHLCVData
+# Use Fyers provider (will fallback if needed)
+from fyers_data_provider import get_fyers_data
 from config import Config
 import indicators
 
@@ -34,7 +35,7 @@ class BacktestEngine:
     
     def __init__(self):
         """Initialize backtest engine."""
-        self.data_provider = DataProvider()
+        pass
     
     def run(self, strategy: Strategy, 
             periods: Optional[List[int]] = None) -> BacktestResult:
@@ -73,8 +74,9 @@ class BacktestEngine:
         Returns:
             PeriodResult with all metrics
         """
-        # Get OHLCV data
-        data = self.data_provider.get_data(
+        # Get OHLCV data (Static CSV or Synthetic)
+        from static_data_provider import get_static_data
+        data = get_static_data(
             market=strategy.market,
             timeframe=strategy.timeframe,
             days=days,

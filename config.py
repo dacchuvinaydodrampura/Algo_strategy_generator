@@ -43,7 +43,8 @@ class Config:
     # STRATEGY GENERATION PARAMETERS
     # ==========================================================================
     TIMEFRAMES: list = ["1m", "5m", "15m"]
-    MARKETS: list = ["NSE:NIFTY50", "NSE:BANKNIFTY", "NSE:NIFTYIT"]
+    # Valid Fyers Symbols
+    MARKETS: list = ["NSE:NIFTY50-INDEX", "NSE:NIFTYBANK-INDEX", "NSE:FINNIFTY-INDEX"]
     
     # Risk-Reward ratios (min, max)
     RR_MIN: float = 1.5
