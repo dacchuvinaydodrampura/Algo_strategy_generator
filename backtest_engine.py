@@ -16,6 +16,7 @@ No look-ahead bias. Uses only past data for signals.
 import numpy as np
 from typing import List, Dict, Optional
 from models import Strategy, Trade, PeriodResult, BacktestResult
+from data_provider import OHLCVData
 # Use Fyers provider (will fallback if needed)
 from fyers_data_provider import get_fyers_data
 from config import Config
