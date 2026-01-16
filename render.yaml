@@ -1,0 +1,16 @@
+services:
+  - type: cron
+    name: strategy-research-engine
+    runtime: python
+    schedule: "* * * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: STRATEGIES_PER_CYCLE
+        value: "5"
+      - key: PYTHONUNBUFFERED
+        value: "1"
