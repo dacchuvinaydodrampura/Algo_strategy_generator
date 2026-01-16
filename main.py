@@ -18,7 +18,7 @@ import sys
 
 # Configure logging to stdout (Crucial for Render Logs)
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed to DEBUG for verbose output
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout)
@@ -26,14 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Flask App for Render Web Service (Free Tier Hack)
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    """Keep-alive endpoint."""
-    logger.info("Health check ping received")
-    return f"Strategy Engine Running | Stored: {get_stored_count()}", 200
+# ... (flask app remains same) ...
 
 def run_cycle():
     """Run a single strategy research cycle."""
@@ -41,8 +34,7 @@ def run_cycle():
     
     logger.info("=" * 60)
     logger.info(f"🚀 Strategy Research Engine - Cycle Started")
-    # ... rest of the logic ...
-    
+
     try:
         # Validate configuration
         Config.validate()
@@ -59,34 +51,53 @@ def run_cycle():
         strategies = generate_strategies(Config.STRATEGIES_PER_CYCLE)
         generated = len(strategies)
         
+        for i, s in enumerate(strategies):
+            logger.debug(f"[Gen] Strategy {i+1}: {s.name} ({s.market} {s.timeframe})")
+            logger.debug(f"      Rules: {s.entry_rules}")
+        
         # Step 2: Validate strategies
         valid_strategies = validate_strategies(strategies)
         validated = len(valid_strategies)
+        logger.info(f"✅ Validated {validated}/{generated} strategies.")
         
         if not valid_strategies:
-            logger.info("   No valid strategies to backtest")
+            logger.warning("   No valid strategies to backtest")
             return
         
         # Step 3 & 4: Backtest and filter each strategy
         for strategy in valid_strategies:
+            logger.info(f"👉 Testing: {strategy.name}")
+            
             # Backtest across all periods
-            result = run_backtest(strategy)
-            backtested += 1
-            
-            # Apply consistency filter
-            is_consistent, failures = check_consistency(result)
-            
-            if is_consistent:
-                passed += 1
-                logger.info(f"   ✅ PASSED all filters: {strategy.name}")
+            try:
+                result = run_backtest(strategy)
+                backtested += 1
                 
-                # Store strategy
-                store_strategy(strategy, result)
+                # Log Summary of Backtest
+                logger.debug(f"   📊 Backtest Results for {strategy.name}:")
+                for period_days, res in result.period_results.items():
+                    logger.debug(f"      {period_days}d: PnL {res.total_pnl:.2f} | WR {res.win_rate*100:.1f}% | DD {res.max_drawdown*100:.1f}% | Trades {res.total_trades}")
+
+                # Apply consistency filter
+                is_consistent, failures = check_consistency(result)
                 
-                # Send Telegram notification
-                if notify_strategy(strategy, result):
-                    notified += 1
-        
+                if is_consistent:
+                    passed += 1
+                    logger.info(f"   ✅ PASSED ALL FILTERS!")
+                    
+                    # Store strategy
+                    store_strategy(strategy, result)
+                    
+                    # Send Telegram notification
+                    if notify_strategy(strategy, result):
+                        notified += 1
+                else:
+                    logger.info(f"   ❌ Filter Failed: {failures[:1]}") # Log first failure reason
+                    logger.debug(f"      All Failures: {failures}")
+
+            except Exception as bt_error:
+                logger.error(f"   ⚠️ Backtest crash for {strategy.name}: {bt_error}")
+
         # Summary
         elapsed = time.time() - start_time
         logger.info("-" * 60)
