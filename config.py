@@ -33,19 +33,19 @@ class Config:
     BACKTEST_PERIODS: list = [30, 60, 180, 365]
     
     # ==========================================================================
-    # CONSISTENCY FILTER THRESHOLDS
+    # CONSISTENCY FILTER THRESHOLDS (With 10% Buffer)
     # ==========================================================================
-    MAX_DRAWDOWN_LIMIT: float = 0.20  # 20%
+    MAX_DRAWDOWN_LIMIT: float = 0.22  # 22% (was 20%, +10% buffer)
     MAX_SINGLE_TRADE_CONTRIBUTION: float = 0.35  # Relaxed slightly to allow high return strategies
     MIN_EXPECTANCY: float = 0.5   # Positive expectancy required
-    MIN_WIN_RATE: float = 60.0    # 60%
-    MIN_PROFIT_FACTOR: float = 2.0
+    MIN_WIN_RATE: float = 54.0    # 54% (was 60%, -10% buffer)
+    MIN_PROFIT_FACTOR: float = 1.8  # 1.8 (was 2.0, -10% buffer)
     
-    # Minimum Return Targets (Percentage)
-    MIN_RETURN_30D: float = 33.0
-    MIN_RETURN_60D: float = 66.0
-    MIN_RETURN_180D: float = 150.0
-    MIN_RETURN_365D: float = 200.0
+    # Minimum Return Targets (Percentage) (With -10% Buffer)
+    MIN_RETURN_30D: float = 29.7  # (was 33%)
+    MIN_RETURN_60D: float = 59.4  # (was 66%)
+    MIN_RETURN_180D: float = 135.0  # (was 150%)
+    MIN_RETURN_365D: float = 180.0  # (was 200%)
     
     # ==========================================================================
     # STRATEGY GENERATION PARAMETERS
@@ -54,8 +54,8 @@ class Config:
     # Valid Fyers Symbols
     MARKETS: list = ["NSE:NIFTY50-INDEX"]
     
-    # Risk-Reward ratios (min, max)
-    RR_MIN: float = 2.0
+    # Risk-Reward ratios (min, max) - Buffered
+    RR_MIN: float = 1.8  # (was 2.0, -10% buffer)
     RR_MAX: float = 4.0
     
     # EMA periods to use
