@@ -3,30 +3,32 @@ AI Internet Brain Module - Powered by Google Gemini.
 
 Provides high-level market context and strategy bias using AI 
 to help the research engine adapt to real-time internet context.
+
+Uses direct REST API calls to avoid library version issues.
 """
 
 import os
 import json
 import logging
-import google.generativeai as genai
+import requests
 from config import Config
 
 logger = logging.getLogger(__name__)
 
+# Gemini API Endpoint (v1beta)
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+
+
 class AIInternetBrain:
     """
     Interfaces with Gemini AI to provide market context.
-    Optimized for 512MB RAM with concise prompting and memory cleanup.
+    Uses direct HTTP requests for maximum compatibility.
+    Optimized for 512MB RAM with concise prompting.
     """
     
     def __init__(self):
         self.api_key = Config.GEMINI_API_KEY
         self.enabled = bool(self.api_key)
-        if self.enabled:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-pro')
-        else:
-            self.model = None
 
     def get_market_bias(self, recent_performance: str = "") -> dict:
         """
@@ -40,7 +42,7 @@ class AIInternetBrain:
                 "concept_focus": "SMC/PRICE_ACTION/TECHNICAL"
             }
         """
-        if not self.enabled or not self.model:
+        if not self.enabled:
             return self._default_bias()
 
         prompt = f"""
@@ -60,9 +62,25 @@ class AIInternetBrain:
         """
 
         try:
-            response = self.model.generate_content(prompt)
-            # Safe JSON extraction
-            text = response.text
+            # Direct REST API call
+            response = requests.post(
+                f"{GEMINI_API_URL}?key={self.api_key}",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [{
+                        "parts": [{"text": prompt}]
+                    }]
+                },
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"⚠️ AI Brain Error: {response.status_code} - {response.text[:200]}")
+                return self._default_bias()
+            
+            result = response.json()
+            text = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            
             # Basic cleanup for accidental markdown
             if "```json" in text:
                 text = text.split("```json")[1].split("```")[0].strip()
@@ -72,6 +90,10 @@ class AIInternetBrain:
             bias = json.loads(text)
             logger.info(f"🧠 AI Insight: {bias.get('sentiment')} | Mode: {bias.get('mode')}")
             return bias
+            
+        except requests.exceptions.Timeout:
+            logger.error("⚠️ AI Brain Error: Request timed out")
+            return self._default_bias()
         except Exception as e:
             logger.error(f"⚠️ AI Brain Error: {e}")
             return self._default_bias()
