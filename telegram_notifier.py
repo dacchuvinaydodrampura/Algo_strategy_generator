@@ -68,8 +68,9 @@ class TelegramNotifier:
                     os.remove(pdf_filename)
                 return res
             else:
-                print("⚠️ PDF Generation failed, falling back to text")
-                return self._send_message(caption)
+                print("⚠️ PDF Generation failed, falling back to detailed text")
+                full_text = self._format_fallback_text(strategy, backtest_result)
+                return self._send_message(full_text)
                 
         except Exception as e:
             print(f"❌ Error in send flow: {e}")
@@ -96,6 +97,30 @@ class TelegramNotifier:
 {stats}
 
 <i>Full detailed report attached as PDF.</i> 📄"""
+        return msg
+
+    def _format_fallback_text(self, strategy: Strategy, result: BacktestResult) -> str:
+        """Fallback detailed text report if PDF fails."""
+        
+        # Entry rules
+        rules_text = ""
+        for rule in strategy.entry_rules:
+            rules_text += f"• {rule}\n"
+            
+        msg = f"""🎯 <b>STRATEGY PASSED (TEXT FALLBACK)</b>
+        
+<b>ID:</b> {strategy.name}
+<b>Market:</b> {strategy.market} ({strategy.timeframe})
+
+<b>Rules:</b>
+{rules_text}
+
+<b>Institutional Patterns Detected:</b>
+{'✅ Liquidity Sweeps' if any('sweep' in r for r in strategy.entry_rules) else ''}
+{'✅ Order Blocks' if any('order_block' in r for r in strategy.entry_rules) else ''}
+
+<i>(PDF Report Generation Failed - This is a text backup)</i>
+"""
         return msg
 
     def _send_document(self, filepath: str, caption: str) -> bool:

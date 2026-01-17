@@ -6,13 +6,13 @@ from datetime import datetime
 
 class StrategyReportPDF(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 15)
+        self.set_font('Helvetica', 'B', 15)
         self.cell(0, 10, 'Institutional Strategy Report', 0, 1, 'C')
         self.ln(10)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
+        self.set_font('Helvetica', 'I', 8)
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
 def generate_strategy_pdf(strategy: Strategy, result: BacktestResult, filename: str):
@@ -22,16 +22,16 @@ def generate_strategy_pdf(strategy: Strategy, result: BacktestResult, filename: 
     pdf.add_page()
     
     # Title Section
-    pdf.set_font('Arial', 'B', 16)
+    pdf.set_font('Helvetica', 'B', 16)
     pdf.cell(0, 10, f"Strategy: {strategy.name}", 0, 1, 'L')
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('Helvetica', '', 12)
     pdf.cell(0, 10, f"Market: {strategy.market} | Timeframe: {strategy.timeframe}", 0, 1, 'L')
     pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 0, 1, 'L')
     pdf.line(10, 45, 200, 45)
     pdf.ln(10)
     
     # Performance Snapshot
-    pdf.set_font('Arial', 'B', 14)
+    pdf.set_font('Helvetica', 'B', 14)
     pdf.cell(0, 10, "Performance Snapshot (365 Days)", 0, 1, 'L')
     pdf.set_font('Courier', '', 11)
     
