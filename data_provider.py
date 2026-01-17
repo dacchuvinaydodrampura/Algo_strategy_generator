@@ -78,99 +78,102 @@ class DataProvider:
     def _generate_synthetic_data(cls, market: str, timeframe: str, 
                                   days: int, seed: Optional[int] = None) -> OHLCVData:
         """
-        Generate realistic synthetic OHLCV data.
+        Generate realistic synthetic OHLCV data with Institutional Patterns.
         
-        Uses geometric Brownian motion with mean reversion
-        to simulate realistic price movement.
+        Uses Regime-Switching Model:
+        - Trending (Bull/Bear)
+        - Ranging
+        - Volatility Squeezes
+        - Liquidity Sweeps (Smart Money injections)
         """
-        # Deterministic seed based on market if not provided
         if seed is None:
+            # Change seed daily to simulate fresh market
             seed = int(hashlib.md5(f"{market}_{datetime.now().date()}".encode()).hexdigest()[:8], 16)
         
         np.random.seed(seed)
         
-        # Candles per day
-        candles_per_day = {
-            "1m": 375,
-            "5m": 75,
-            "15m": 25,
-        }.get(timeframe, 75)
-        
+        candles_per_day = {"1m": 375, "5m": 75, "15m": 25}.get(timeframe, 75)
         total_candles = days * candles_per_day
         
-        # Base price based on market
-        base_prices = {
-            "NSE:NIFTY50": 22000.0,
-            "NSE:BANKNIFTY": 48000.0,
-            "NSE:NIFTYIT": 35000.0,
-        }
-        base_price = base_prices.get(market, 22000.0)
+        base_price = 22000.0 if "NIFTY" in market else 100.0
         
-        # Volatility based on market
-        volatilities = {
-            "NSE:NIFTY50": 0.0012,
-            "NSE:BANKNIFTY": 0.0018,
-            "NSE:NIFTYIT": 0.0015,
-        }
-        volatility = volatilities.get(market, 0.0012)
+        # Initialize arrays
+        open_p = np.zeros(total_candles)
+        high_p = np.zeros(total_candles)
+        low_p = np.zeros(total_candles)
+        close_p = np.zeros(total_candles)
+        vol_p = np.zeros(total_candles)
         
+        # 1. Generate core price path using Regime Switching
+        # Regimes: 0=Range, 1=Bull Trend, 2=Bear Trend
+        current_price = base_price
+        
+        # Break total duration into segments (e.g., 2-week regimes)
+        segment_len = candles_per_day * 10 
+        
+        for i in range(total_candles):
+            if i % segment_len == 0:
+                # Switch regime occasionally. Bias towards Bull (1) for Nifty to allow 200% returns
+                regime = np.random.choice([0, 1, 2], p=[0.3, 0.5, 0.2])
+                
+                # Volatility per regime
+                if regime == 0: # Range
+                    mu = 0.0
+                    sigma = 0.001
+                elif regime == 1: # Bull
+                    mu = 0.0003  # Strong upward drift
+                    sigma = 0.0015
+                else: # Bear
+                    mu = -0.0004 # Sharp drops
+                    sigma = 0.0025
+
+            # GBM Step
+            shock = np.random.normal(mu, sigma)
+            current_price *= (1 + shock)
+            
+            # --- PATTERN INJECTION ---
+            # Occasionally inject a "Liquidity Sweep" (Dip then Rip)
+            is_sweep = False
+            if regime == 1 and np.random.random() < 0.02: # 2% chance in bull trend
+                # Create a dip (the sweep)
+                current_price *= 0.995 
+                is_sweep = True
+
+            # Form Candle
+            daily_vol = sigma * current_price
+            
+            op = current_price
+            cl = current_price * (1 + np.random.normal(0, sigma/2))
+            
+            # High/Low logic
+            hi = max(op, cl) + abs(np.random.normal(0, daily_vol))
+            lo = min(op, cl) - abs(np.random.normal(0, daily_vol))
+            
+            if is_sweep:
+                # Force Low to be deep (the sweep) but Close high
+                lo = lo * 0.998 
+                cl = max(op, cl) # Close green
+            
+            open_p[i] = op
+            close_p[i] = cl
+            high_p[i] = hi
+            low_p[i] = lo
+            
+            # Volume (higher on volatile days)
+            vol_p[i] = np.random.randint(5000, 50000) * (1 + abs(shock)*1000)
+
         # Generate timestamps
         start_date = datetime.now() - timedelta(days=days)
         timestamps = np.array([
-            start_date + timedelta(minutes=i * (375 // candles_per_day))
-            for i in range(total_candles)
+            start_date + timedelta(minutes=k * (375 // candles_per_day))
+            for k in range(total_candles)
         ])
-        
-        # Generate price series using GBM with mean reversion
-        returns = np.random.normal(0, volatility, total_candles)
-        
-        # Add trend and mean reversion
-        trend = np.random.choice([-1, 1]) * 0.00001  # Slight trend
-        mean_reversion_strength = 0.02
-        
-        prices = np.zeros(total_candles)
-        prices[0] = base_price
-        
-        for i in range(1, total_candles):
-            # Mean reversion component
-            mean_rev = mean_reversion_strength * (base_price - prices[i-1]) / base_price
-            
-            # Price change
-            change = prices[i-1] * (returns[i] + trend + mean_rev)
-            prices[i] = prices[i-1] + change
-        
-        # Generate OHLC from price series
-        open_prices = np.zeros(total_candles)
-        high_prices = np.zeros(total_candles)
-        low_prices = np.zeros(total_candles)
-        close_prices = np.zeros(total_candles)
-        volumes = np.zeros(total_candles)
-        
-        for i in range(total_candles):
-            base = prices[i]
-            spread = base * volatility * 0.5
-            
-            open_prices[i] = base + np.random.uniform(-spread, spread)
-            close_prices[i] = base + np.random.uniform(-spread, spread)
-            
-            # High is max of open/close plus some
-            high_prices[i] = max(open_prices[i], close_prices[i]) + abs(np.random.normal(0, spread))
-            # Low is min of open/close minus some
-            low_prices[i] = min(open_prices[i], close_prices[i]) - abs(np.random.normal(0, spread))
-            
-            # Volume with some randomness
-            base_volume = 10000
-            volumes[i] = base_volume * (1 + abs(np.random.normal(0, 0.5)))
         
         return OHLCVData(
             timestamps=timestamps,
-            open=open_prices,
-            high=high_prices,
-            low=low_prices,
-            close=close_prices,
-            volume=volumes,
+            open=open_p, high=high_p, low=low_p, close=close_p, volume=vol_p
         )
-    
+
     @classmethod
     def clear_cache(cls):
         """Clear cached data."""
