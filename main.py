@@ -99,7 +99,7 @@ def run_cycle():
                 # Log Summary of Backtest
                 logger.debug(f"   📊 Backtest Results for {strategy.name}:")
                 for period_days, res in result.period_results.items():
-                    logger.debug(f"      {period_days}d: PnL {res.total_pnl:.2f} | WR {res.win_rate*100:.1f}% | DD {res.max_drawdown*100:.1f}% | Trades {res.total_trades}")
+                    logger.debug(f"      {period_days}d: PnL {res.total_pnl:.2f} | WR {res.win_rate:.1f}% | DD {res.max_drawdown_percent:.1f}% | Trades {res.total_trades}")
 
                 # Apply consistency filter
                 is_consistent, failures = check_consistency(result)
