@@ -236,8 +236,21 @@ class BacktestEngine:
         
         # Check for various entry conditions
         for rule in rules:
-            rule_lower = rule.lower()
+            rule_lower = rule.lower().strip()
             
+            # --- DYNAMIC INDICATOR MAPPING (Master Logic) ---
+            # Automatically links any 'detect_' rule to its function in indicators.py
+            if rule_lower.startswith("detect_"):
+                func = getattr(indicators, rule_lower, None)
+                if func and callable(func):
+                    try:
+                        # Call with standard signature
+                        if not func(data.open, data.close, data.high, data.low, idx):
+                            return None
+                        continue # Rule passed, move to next
+                    except Exception:
+                        pass # Fallback to manual check if signature differs
+
             # EMA crossover conditions
             if "ema_fast_above_slow" in rule_lower:
                 if ema_fast <= ema_slow:
@@ -265,41 +278,12 @@ class BacktestEngine:
                         if price >= vwap_val:
                             return None
             
-            # RSI conditions
-            if strategy.use_rsi and "rsi" in ind:
-                rsi_val = ind["rsi"][idx]
-                if not np.isnan(rsi_val):
-                    if "rsi_below_70" in rule_lower:
-                        if rsi_val >= 70:
-                            return None
-                    elif "rsi_above_30" in rule_lower:
-                        if rsi_val <= 30:
-                            return None
-            
-            # Breakout conditions
-            if "breakout_above" in rule_lower:
-                lookback = 20
-                if idx >= lookback:
-                    recent_high = np.max(data.high[idx-lookback:idx])
-                    if price <= recent_high:
-                        return None
-            elif "breakout_below" in rule_lower:
-                lookback = 20
-                if idx >= lookback:
-                    recent_low = np.min(data.low[idx-lookback:idx])
-                    if price >= recent_low:
-                        return None
-            
-            # Engulfing patterns
+            # Price action candle patterns
             if "bullish_engulfing" in rule_lower:
-                if not indicators.is_bullish_engulfing(
-                    data.open, data.close, data.high, data.low, idx
-                ):
+                if not indicators.is_bullish_engulfing(data.open, data.close, data.high, data.low, idx):
                     return None
             elif "bearish_engulfing" in rule_lower:
-                if not indicators.is_bearish_engulfing(
-                    data.open, data.close, data.high, data.low, idx
-                ):
+                if not indicators.is_bearish_engulfing(data.open, data.close, data.high, data.low, idx):
                     return None
             
             # Inside bar
@@ -309,63 +293,33 @@ class BacktestEngine:
             
             # Morning Star
             if "morning_star_pattern" in rule_lower:
-                if not indicators.is_morning_star(
-                    data.open, data.close, data.high, data.low, idx
-                ):
+                if not indicators.is_morning_star(data.open, data.close, data.high, data.low, idx):
                     return None
             
-            # VWAP proximity
-            if "price_within_0.5pct_of_vwap" in rule_lower:
-                if "vwap" in ind:
-                    vwap_val = ind["vwap"][idx]
-                    if not np.isnan(vwap_val):
-                        dist = abs(price - vwap_val) / price
-                        if dist > 0.005:
-                            return None
-
-            # --- INSTITUTIONAL (SMC) PATTERNS ---
-            
-            # 1. Imbalance / FVG
+            # --- MANUALLY MAPPED SMC PATTERNS ---
             if "bullish_imbalance" in rule_lower:
-                if not indicators.detect_bullish_imbalance(
-                    data.open, data.close, data.high, data.low, idx
-                ):
+                if not indicators.detect_bullish_imbalance(data.open, data.close, data.high, data.low, idx):
                     return None
             elif "bearish_imbalance" in rule_lower:
-                if not indicators.detect_bearish_imbalance(
-                    data.open, data.close, data.high, data.low, idx
-                ):
+                if not indicators.detect_bearish_imbalance(data.open, data.close, data.high, data.low, idx):
                     return None
                     
-            # 2. Order Blocks
             if "bullish_order_block" in rule_lower:
-                if not indicators.detect_bullish_order_block(
-                    data.open, data.close, idx
-                ):
+                if not indicators.detect_bullish_order_block(data.open, data.close, idx):
                     return None
             elif "bearish_order_block" in rule_lower:
-                if not indicators.detect_bearish_order_block(
-                    data.open, data.close, idx
-                ):
+                if not indicators.detect_bearish_order_block(data.open, data.close, idx):
                     return None
             
-            # 3. Liquidity Sweeps
             if "liquidity_sweep_low" in rule_lower:
-                if not indicators.detect_liquidity_sweep_low(
-                    data.high, data.low, data.close, idx, lookback=20
-                ):
+                if not indicators.detect_liquidity_sweep_low(data.high, data.low, data.close, idx):
                     return None
             elif "liquidity_sweep_high" in rule_lower:
-                if not indicators.detect_liquidity_sweep_high(
-                    data.high, data.low, data.close, idx, lookback=20
-                ):
+                if not indicators.detect_liquidity_sweep_high(data.high, data.low, data.close, idx):
                     return None
                     
-            # 4. Volatility Squeeze
             if "volatility_squeeze" in rule_lower:
-                if not indicators.detect_volatility_squeeze(
-                    data.high, data.low, data.close, idx
-                ):
+                if not indicators.detect_volatility_squeeze(data.high, data.low, data.close, idx):
                     return None
 
         
