@@ -197,9 +197,10 @@ class StrategyValidator:
     
     def _check_risk_reward(self, strategy: Strategy):
         """Check risk-reward is within allowed range."""
-        if strategy.risk_reward < 2.0:
+        from config import Config
+        if strategy.risk_reward < Config.RR_MIN:
             self.validation_errors.append(
-                f"Risk-reward {strategy.risk_reward} is less than 2.0 (User Rule)"
+                f"Risk-reward {strategy.risk_reward} is less than {Config.RR_MIN} (Buffered Rule)"
             )
         if strategy.risk_reward > 5.0:
             self.validation_errors.append(
