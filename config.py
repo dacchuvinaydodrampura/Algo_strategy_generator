@@ -47,11 +47,11 @@ class Config:
     MIN_WIN_RATE: float = 54.0    # 54% (was 60%, -10% buffer)
     MIN_PROFIT_FACTOR: float = 1.8  # 1.8 (was 2.0, -10% buffer)
     
-    # Minimum Return Targets (Percentage) - Realistic Values
-    MIN_RETURN_30D: float = 0.25   # ~0.008%/day
-    MIN_RETURN_60D: float = 5.0    # ~0.08%/day
-    MIN_RETURN_180D: float = 10.0  # ~0.05%/day
-    MIN_RETURN_365D: float = 15.0  # ~0.04%/day
+    # Minimum Return Targets (Percentage) - User Defined
+    MIN_RETURN_30D: float = 1.06    # ~250 Nifty points
+    MIN_RETURN_60D: float = 1.5     # ~356 Nifty points
+    MIN_RETURN_180D: float = 2.75   # ~650 Nifty points
+    MIN_RETURN_365D: float = 4.50   # ~1000 Nifty points
     
     # ==========================================================================
     # STRATEGY GENERATION PARAMETERS
