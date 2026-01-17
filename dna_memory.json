@@ -1,16 +1,18 @@
 {
   "keywords": {
-    "morning_star_pattern": 0.1429,
-    "price_within_0.5pct_of_vwap": 0.1429,
-    "rsi_above_30": 0.1429,
-    "detect_inside_bar": 0.1429,
-    "breakout_below_20bar_low": 0.1429,
-    "price_above_vwap": 0.1429,
-    "is_in_kill_zone": 0.1429
+    "morning_star_pattern": 0.1111,
+    "price_within_0.5pct_of_vwap": 0.1111,
+    "rsi_above_30": 0.1111,
+    "detect_inside_bar": 0.1111,
+    "breakout_below_20bar_low": 0.1111,
+    "price_above_vwap": 0.2222,
+    "is_in_kill_zone": 0.1111,
+    "detect_bullish_pin_bar": 0.1111
   },
   "timeframes": {
-    "15m": 1.0
+    "15m": 0.6667,
+    "5m": 0.3333
   },
-  "rr_focus": 2.15,
+  "rr_focus": 2.5,
   "version": 1.0
 }
