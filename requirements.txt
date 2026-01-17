@@ -5,3 +5,5 @@ python-dotenv>=1.0.0
 flask>=3.0.0
 gunicorn>=21.2.0
 fyers-apiv3>=3.0.0
+pymongo>=4.0.0
+dnspython>=2.0.0

@@ -33,7 +33,22 @@ class StrategyRepository:
         """
         self.storage_path = storage_path or Config.STORAGE_PATH
         self._ensure_storage_exists()
-    
+        
+        # MongoDB Support
+        self.mongo_collection = None
+        mongo_uri = os.getenv("MONGO_URI")
+        if mongo_uri:
+            try:
+                import pymongo
+                client = pymongo.MongoClient(mongo_uri)
+                db = client.get_database("algo_research")
+                self.mongo_collection = db.get_collection("strategies")
+                # Create unique index on hash
+                self.mongo_collection.create_index("hash", unique=True)
+                print("✅ Connected to MongoDB for strategy persistence")
+            except Exception as e:
+                print(f"⚠️ MongoDB connection failed: {e}")
+
     def _ensure_storage_exists(self):
         """Create storage file if it doesn't exist."""
         if not os.path.exists(self.storage_path):
@@ -73,14 +88,28 @@ class StrategyRepository:
         data = self._load()
         
         # Check for duplicates
+        # Check for duplicates
         existing_hashes = {item.get("hash", "") for item in data}
         if stored.hash in existing_hashes:
-            print(f"⚠️ Strategy {strategy.name} is a duplicate, skipping")
+            print(f"⚠️ Strategy {strategy.name} is a duplicate (Local), skipping")
             return False
         
-        # Append and save
+        # Append and save locally
         data.append(stored.to_dict())
         self._save(data)
+        
+        # Save to MongoDB
+        if self.mongo_collection:
+            try:
+                # Use update_one with upsert to avoid duplicate key errors gracefully
+                self.mongo_collection.update_one(
+                    {"hash": stored.hash},
+                    {"$set": stored.to_dict()},
+                    upsert=True
+                )
+                print(f"✅ Stored in MongoDB: {strategy.name}")
+            except Exception as e:
+                print(f"❌ MongoDB save failed: {e}")
         
         print(f"✅ Stored strategy: {strategy.name}")
         return True
