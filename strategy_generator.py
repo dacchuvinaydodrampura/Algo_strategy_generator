@@ -200,11 +200,12 @@ class StrategyGenerator:
         # Select base entry
         if strategy_type == "institutional":
              name, direction, entry_rules = random.choice(self.INSTITUTIONAL_ENTRIES)
-             # Enforce Premium/Discount logic on all institutional plays
-             if direction == "LONG" and "is_in_discount_zone" not in entry_rules:
-                 entry_rules = list(entry_rules) + ["is_in_discount_zone"]
-             elif direction == "SHORT" and "is_in_premium_zone" not in entry_rules:
-                 entry_rules = list(entry_rules) + ["is_in_premium_zone"]
+             # Enforce Premium/Discount logic (50% chance)
+             if random.random() < 0.5:
+                 if direction == "LONG" and "is_in_discount_zone" not in entry_rules:
+                     entry_rules = list(entry_rules) + ["is_in_discount_zone"]
+                 elif direction == "SHORT" and "is_in_premium_zone" not in entry_rules:
+                     entry_rules = list(entry_rules) + ["is_in_premium_zone"]
         elif strategy_type == "price_action":
             name, direction, entry_rules = random.choice(self.PRICE_ACTION_ENTRIES)
         else: # technical
