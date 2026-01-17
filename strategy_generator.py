@@ -11,7 +11,7 @@ All strategies are algorithmically executable with fixed risk-reward.
 """
 
 import random
-from typing import List
+from typing import List, Any
 from models import Strategy
 from config import Config
 from intelligence_module import get_market_experience
