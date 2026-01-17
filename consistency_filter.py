@@ -2,11 +2,14 @@
 Consistency Filter Module.
 
 Filters strategies based on strict consistency rules.
-A strategy PASSES only if ALL conditions are met:
+A strategy PASSES if at least 6 out of 7 conditions are met (1 failure allowed):
 - All 4 periods are profitable
-- Max drawdown < 25%
-- Expectancy > 0
-- No single trade contributes > 30% of total profit
+- Max drawdown < 22%
+- Expectancy > 0.5
+- Win Rate > 54%
+- Profit Factor > 1.8
+- Return Targets met
+- No single trade contributes > 35% of total profit
 """
 
 from typing import Tuple, List
@@ -71,7 +74,8 @@ class ConsistencyFilter:
         if not self._check_single_trade_contribution(result, failures):
             pass
         
-        passed = len(failures) == 0
+        # Relaxed Rule: Allow 1 failure (6 out of 7 must pass)
+        passed = len(failures) <= 1
         return passed, failures
     
     def _check_all_profitable(self, result: BacktestResult, 

@@ -111,7 +111,10 @@ def run_cycle():
                 
                 if is_consistent:
                     passed += 1
-                    logger.info(f"   ✅ PASSED ALL FILTERS!")
+                    if len(failures) > 0:
+                        logger.info(f"   ⚠️ PASSED (With {len(failures)} Failure): {failures[0]}")
+                    else:
+                        logger.info(f"   ✅ PASSED ALL FILTERS (Perfect)")
                     
                     # Store strategy
                     store_strategy(strategy, result)
