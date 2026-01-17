@@ -1,22 +1,23 @@
 {
   "keywords": {
-    "morning_star_pattern": 0.0556,
-    "price_within_0.5pct_of_vwap": 0.0556,
-    "rsi_above_30": 0.0556,
-    "detect_inside_bar": 0.1111,
-    "breakout_below_20bar_low": 0.1111,
-    "price_above_vwap": 0.2222,
-    "is_in_kill_zone": 0.1111,
-    "detect_bullish_pin_bar": 0.0556,
-    "detect_failed_auction_bullish": 0.0556,
-    "detect_discount_zone": 0.0556,
-    "rsi_between_40_60": 0.0556,
-    "rsi_crossed_below_70": 0.0556
+    "morning_star_pattern": 0.0476,
+    "price_within_0.5pct_of_vwap": 0.0476,
+    "rsi_above_30": 0.0476,
+    "detect_inside_bar": 0.0952,
+    "breakout_below_20bar_low": 0.0952,
+    "price_above_vwap": 0.2381,
+    "is_in_kill_zone": 0.0952,
+    "detect_bullish_pin_bar": 0.0476,
+    "detect_failed_auction_bullish": 0.0476,
+    "detect_discount_zone": 0.0952,
+    "rsi_between_40_60": 0.0476,
+    "rsi_crossed_below_70": 0.0476,
+    "detect_rejection_block_bullish": 0.0476
   },
   "timeframes": {
-    "15m": 0.8,
-    "5m": 0.2
+    "15m": 0.8333,
+    "5m": 0.1667
   },
-  "rr_focus": 2.7,
+  "rr_focus": 2.93,
   "version": 1.0
 }
