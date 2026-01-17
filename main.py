@@ -115,6 +115,10 @@ def run_cycle():
             except Exception as bt_error:
                 logger.error(f"   ⚠️ Backtest crash for {strategy.name}: {bt_error}")
 
+            # Explicit memory cleanup for 512MB constraint
+            import gc
+            gc.collect()
+
         # Summary
         elapsed = time.time() - start_time
         logger.info("-" * 60)
