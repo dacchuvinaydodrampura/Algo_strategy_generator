@@ -1,0 +1,51 @@
+----------------------------------------
+🎯 NEW STRATEGY PASSED
+
+📊 Market: NSE:NIFTY50-INDEX
+⏱ Timeframe: 15m
+📈 Trades/Year: 521
+
+📉 Win Rate: 43.6%
+📉 Max Drawdown: 1.0%
+📈 Profit Factor: 1.16
+📊 Expectancy: 5.29
+
+📊 Performance:
+• 30D: +0.8%
+• 60D: +2.4%
+• 180D: +4.3%
+• 365D: +9.1%
+
+📋 Entry: morning_star_pattern, price_within_0.5pct_of_vwap, rsi_above_30
+🚪 Exit: stop_loss_hit, take_profit_hit
+🛑 SL: entry_candle_stop
+🎯 R:R: 1:1.7
+
+ID: 8cda20fc
+
+🔹 ALGO BACKTESTING RULES VERIFICATION 🔹
+
+1. Morning Star Pattern Logic:
+   def is_morning_star(candles):
+       # Candle 1 (Ind-2): Bearish (Close < Open)
+       # Candle 2 (Ind-1): Small Body (Body < 60% of Candle 1 Body)
+       # Candle 3 (Ind-0): Bullish (Close > Open) AND (Close > Midpoint of Candle 1)
+       return True if all_conditions_met else False
+
+2. Price Within 0.5Pct Of Vwap Logic:
+   # Entry valid ONLY if price is within 0.5% of VWAP line
+   dist = abs(Close - VWAP) / Close
+   return True if dist <= 0.005 else False
+
+3. Rsi Above 30 Logic:
+   # RSI(14) filter
+   return True if RSI[idx] > 30 else False
+
+4. Stop Loss (entry_candle_stop):
+   # Dynamic SL based on entry candle's High/Low volatility
+   stop_dist = max(abs(Entry - Low), abs(High - Entry))
+   SL_Price = Entry - stop_dist (for Long)
+
+5. Take Profit (1:1.7 RR):
+   TP_Price = Entry + (stop_dist * 1.7)
+----------------------------------------

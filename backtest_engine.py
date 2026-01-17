@@ -182,8 +182,10 @@ class BacktestEngine:
                     atr = ind["atr"][i] if not np.isnan(ind["atr"][i]) else current_price * 0.01
                     
                     stop_distance = self._calculate_stop_distance(
-                        strategy.stop_loss_logic, atr, current_price
+                        strategy.stop_loss_logic, atr, current_price,
+                        data.high[i], data.low[i]
                     )
+
                     
                     if position == "LONG":
                         stop_loss = entry_price - stop_distance
@@ -304,6 +306,68 @@ class BacktestEngine:
             if "inside_bar" in rule_lower:
                 if not indicators.is_inside_bar(data.high, data.low, idx):
                     return None
+            
+            # Morning Star
+            if "morning_star_pattern" in rule_lower:
+                if not indicators.is_morning_star(
+                    data.open, data.close, data.high, data.low, idx
+                ):
+                    return None
+            
+            # VWAP proximity
+            if "price_within_0.5pct_of_vwap" in rule_lower:
+                if "vwap" in ind:
+                    vwap_val = ind["vwap"][idx]
+                    if not np.isnan(vwap_val):
+                        dist = abs(price - vwap_val) / price
+                        if dist > 0.005:
+                            return None
+
+            # --- INSTITUTIONAL (SMC) PATTERNS ---
+            
+            # 1. Imbalance / FVG
+            if "bullish_imbalance" in rule_lower:
+                if not indicators.detect_bullish_imbalance(
+                    data.open, data.close, data.high, data.low, idx
+                ):
+                    return None
+            elif "bearish_imbalance" in rule_lower:
+                if not indicators.detect_bearish_imbalance(
+                    data.open, data.close, data.high, data.low, idx
+                ):
+                    return None
+                    
+            # 2. Order Blocks
+            if "bullish_order_block" in rule_lower:
+                if not indicators.detect_bullish_order_block(
+                    data.open, data.close, idx
+                ):
+                    return None
+            elif "bearish_order_block" in rule_lower:
+                if not indicators.detect_bearish_order_block(
+                    data.open, data.close, idx
+                ):
+                    return None
+            
+            # 3. Liquidity Sweeps
+            if "liquidity_sweep_low" in rule_lower:
+                if not indicators.detect_liquidity_sweep_low(
+                    data.high, data.low, data.close, idx, lookback=20
+                ):
+                    return None
+            elif "liquidity_sweep_high" in rule_lower:
+                if not indicators.detect_liquidity_sweep_high(
+                    data.high, data.low, data.close, idx, lookback=20
+                ):
+                    return None
+                    
+            # 4. Volatility Squeeze
+            if "volatility_squeeze" in rule_lower:
+                if not indicators.detect_volatility_squeeze(
+                    data.high, data.low, data.close, idx
+                ):
+                    return None
+
         
         # If all conditions passed, determine direction
         # Based on EMA direction or price action
@@ -340,7 +404,9 @@ class BacktestEngine:
         return False, 0.0
     
     def _calculate_stop_distance(self, sl_logic: str, atr: float, 
-                                  price: float) -> float:
+                                  price: float, high: float = 0.0, 
+                                  low: float = 0.0) -> float:
+
         """Calculate stop loss distance based on logic."""
         sl_lower = sl_logic.lower()
         
@@ -352,9 +418,13 @@ class BacktestEngine:
             return price * 0.005
         elif "1pct" in sl_lower:
             return price * 0.01
+        elif "entry_candle_stop" in sl_lower:
+            # Return max distance to high or low (covers both Long/Short)
+            return max(abs(price - low), abs(high - price))
         else:
             # Default to 1.5x ATR
             return atr * 1.5
+
     
     def _calculate_metrics(self, trades: List[Trade], days: int,
                             data: OHLCVData) -> PeriodResult:

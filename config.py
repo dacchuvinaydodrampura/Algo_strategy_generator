@@ -35,20 +35,28 @@ class Config:
     # ==========================================================================
     # CONSISTENCY FILTER THRESHOLDS
     # ==========================================================================
-    MAX_DRAWDOWN_LIMIT: float = 0.25  # 25%
-    MAX_SINGLE_TRADE_CONTRIBUTION: float = 0.30  # 30%
-    MIN_EXPECTANCY: float = 0.0
+    MAX_DRAWDOWN_LIMIT: float = 0.20  # 20%
+    MAX_SINGLE_TRADE_CONTRIBUTION: float = 0.35  # Relaxed slightly to allow high return strategies
+    MIN_EXPECTANCY: float = 0.5   # Positive expectancy required
+    MIN_WIN_RATE: float = 60.0    # 60%
+    MIN_PROFIT_FACTOR: float = 2.0
+    
+    # Minimum Return Targets (Percentage)
+    MIN_RETURN_30D: float = 33.0
+    MIN_RETURN_60D: float = 66.0
+    MIN_RETURN_180D: float = 150.0
+    MIN_RETURN_365D: float = 200.0
     
     # ==========================================================================
     # STRATEGY GENERATION PARAMETERS
     # ==========================================================================
     TIMEFRAMES: list = ["1m", "5m", "15m"]
     # Valid Fyers Symbols
-    MARKETS: list = ["NSE:NIFTY50-INDEX", "NSE:NIFTYBANK-INDEX", "NSE:FINNIFTY-INDEX"]
+    MARKETS: list = ["NSE:NIFTY50-INDEX"]
     
     # Risk-Reward ratios (min, max)
-    RR_MIN: float = 1.5
-    RR_MAX: float = 3.0
+    RR_MIN: float = 2.0
+    RR_MAX: float = 4.0
     
     # EMA periods to use
     EMA_PERIODS: list = [9, 13, 21, 34, 50]

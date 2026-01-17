@@ -75,6 +75,30 @@ class StrategyGenerator:
          ["price_below_ema_slow", "rally_to_ema_fast"]),
     ]
     
+    # Institutional / SMC Entries (Higher Win Rate Logic)
+    INSTITUTIONAL_ENTRIES = [
+        ("Liquidity Sweep Long", "LONG",
+         ["liquidity_sweep_low", "bullish_order_block"]),
+         
+        ("Liquidity Sweep Short", "SHORT",
+         ["liquidity_sweep_high", "bearish_order_block"]),
+         
+        ("Order Block Re-test Long", "LONG",
+         ["price_above_ema_slow", "bullish_order_block"]),
+         
+        ("Order Block Re-test Short", "SHORT",
+         ["price_below_ema_slow", "bearish_order_block"]),
+         
+        ("FVG Fill Reversal Long", "LONG",
+         ["bullish_imbalance", "rsi_oversold_bounce"]), # requires custom combo
+         
+        ("Squeeze Breakout Long", "LONG",
+         ["volatility_squeeze", "breakout_above_20bar_high"]),
+         
+        ("Squeeze Breakout Short", "SHORT",
+         ["volatility_squeeze", "breakout_below_20bar_low"]),
+    ]
+
     # ==========================================================================
     # FILTER TEMPLATES
     # ==========================================================================
@@ -147,19 +171,23 @@ class StrategyGenerator:
         market = random.choice(Config.MARKETS)
         timeframe = random.choice(Config.TIMEFRAMES)
         
-        # Decide on main strategy type (70% price action)
+        # Decide on main strategy type
+        # 50% Institutional (SMC), 30% Price Action, 20% Technical (EMA/VWAP)
         strategy_type = random.choices(
-            ["price_action", "vwap", "ema"],
-            weights=[0.7, 0.15, 0.15]
+            ["institutional", "price_action", "technical"],
+            weights=[0.5, 0.3, 0.2]
         )[0]
         
         # Select base entry
-        if strategy_type == "price_action":
+        if strategy_type == "institutional":
+             name, direction, entry_rules = random.choice(self.INSTITUTIONAL_ENTRIES)
+        elif strategy_type == "price_action":
             name, direction, entry_rules = random.choice(self.PRICE_ACTION_ENTRIES)
-        elif strategy_type == "vwap":
-            name, direction, entry_rules = random.choice(self.VWAP_ENTRIES)
-        else:
-            name, direction, entry_rules = random.choice(self.EMA_ENTRIES)
+        else: # technical
+            if random.random() < 0.5:
+                name, direction, entry_rules = random.choice(self.VWAP_ENTRIES)
+            else:
+                name, direction, entry_rules = random.choice(self.EMA_ENTRIES)
         
         # Copy rules to avoid mutation
         entry_rules = list(entry_rules)

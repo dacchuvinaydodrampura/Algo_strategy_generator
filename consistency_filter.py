@@ -26,32 +26,48 @@ class ConsistencyFilter:
         self.max_drawdown_limit = Config.MAX_DRAWDOWN_LIMIT * 100  # Convert to %
         self.max_single_trade_contribution = Config.MAX_SINGLE_TRADE_CONTRIBUTION * 100
         self.min_expectancy = Config.MIN_EXPECTANCY
+        self.min_win_rate = Config.MIN_WIN_RATE
+        self.min_profit_factor = Config.MIN_PROFIT_FACTOR
+        
+        # Return targets mapping
+        self.return_targets = {
+            30: Config.MIN_RETURN_30D,
+            60: Config.MIN_RETURN_60D,
+            180: Config.MIN_RETURN_180D,
+            365: Config.MIN_RETURN_365D,
+        }
     
     def check(self, result: BacktestResult) -> Tuple[bool, List[str]]:
         """
         Check if backtest result passes all consistency rules.
-        
-        Args:
-            result: BacktestResult to check
-        
-        Returns:
-            Tuple of (passed, list of failure reasons)
         """
         failures = []
         
         # Check 1: All periods must be profitable
         if not self._check_all_profitable(result, failures):
-            pass  # Failure already added
+            pass 
         
-        # Check 2: Max drawdown < 25% across all periods
+        # Check 2: Max drawdown
         if not self._check_drawdown(result, failures):
             pass
         
-        # Check 3: Expectancy > 0 across all periods
+        # Check 3: Expectancy
         if not self._check_expectancy(result, failures):
             pass
+            
+        # Check 4: Win Rate
+        if not self._check_win_rate(result, failures):
+            pass
+
+        # Check 5: Profit Factor
+        if not self._check_profit_factor(result, failures):
+            pass
+            
+        # Check 6: Return Targets
+        if not self._check_return_targets(result, failures):
+            pass
         
-        # Check 4: No single trade > 30% of total profit
+        # Check 7: No single trade > 30% contribution (secondary check)
         if not self._check_single_trade_contribution(result, failures):
             pass
         
@@ -96,19 +112,39 @@ class ConsistencyFilter:
     
     def _check_expectancy(self, result: BacktestResult, 
                            failures: List[str]) -> bool:
-        """Check that expectancy is positive across all periods."""
-        negative_periods = []
+        """Check valid expectancy."""
+        if result.avg_expectancy < self.min_expectancy:
+            failures.append(f"Expectancy {result.avg_expectancy:.2f} < {self.min_expectancy}")
+            return False
+        return True
+    
+    def _check_win_rate(self, result: BacktestResult, failures: List[str]) -> bool:
+        """Check win rate is above minimum."""
+        if result.avg_win_rate < self.min_win_rate:
+            failures.append(f"Win Rate {result.avg_win_rate:.1f}% < {self.min_win_rate}%")
+            return False
+        return True
+
+    def _check_profit_factor(self, result: BacktestResult, failures: List[str]) -> bool:
+        """Check profit factor is above minimum."""
+        if result.avg_profit_factor < self.min_profit_factor:
+            failures.append(f"Profit Factor {result.avg_profit_factor:.2f} < {self.min_profit_factor}")
+            return False
+        return True
+
+    def _check_return_targets(self, result: BacktestResult, failures: List[str]) -> bool:
+        """Check if return targets are met for each period."""
+        failed_targets = []
         
         for period, period_result in result.period_results.items():
-            if period_result.expectancy <= self.min_expectancy:
-                negative_periods.append(
-                    f"{period}D ({period_result.expectancy:.2f})"
+            target = self.return_targets.get(period)
+            if target and period_result.total_pnl_percent < target:
+                failed_targets.append(
+                    f"{period}D ({period_result.total_pnl_percent:.1f}% < {target}%)"
                 )
         
-        if negative_periods:
-            failures.append(
-                f"Negative expectancy: {', '.join(negative_periods)}"
-            )
+        if failed_targets:
+            failures.append(f"Return targets missed: {', '.join(failed_targets)}")
             return False
         
         return True
