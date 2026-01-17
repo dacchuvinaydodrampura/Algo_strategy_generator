@@ -112,11 +112,12 @@ class StrategyValidator:
             return
         
         for rule in strategy.entry_rules:
-            # Check rule contains valid keywords
+            # Check rule contains valid keywords or starts with detect_
             rule_lower = rule.lower()
             has_valid_keyword = any(
                 kw in rule_lower for kw in self.VALID_ENTRY_KEYWORDS
-            )
+            ) or rule_lower.startswith("detect_")
+            
             if not has_valid_keyword:
                 self.validation_errors.append(
                     f"Entry rule '{rule}' does not contain valid indicator keywords"
