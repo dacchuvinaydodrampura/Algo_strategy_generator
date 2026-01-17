@@ -15,6 +15,17 @@ No infinite loop - designed for Render cron jobs.
 
 import logging
 import sys
+import threading
+import time
+from flask import Flask
+
+from config import Config
+from strategy_generator import generate_strategies
+from strategy_validator import validate_strategies
+from backtest_engine import run_backtest
+from consistency_filter import check_consistency
+from strategy_repository import store_strategy
+from telegram_notifier import notify_strategy
 
 # Configure logging to stdout (Crucial for Render Logs)
 logging.basicConfig(
@@ -25,6 +36,12 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "Strategy Research Engine Running", 200
 
 # ... (flask app remains same) ...
 
