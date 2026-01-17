@@ -32,12 +32,33 @@ def sync_to_github():
 
         # 2. Update Remote URL with Token (if available)
         if Config.GITHUB_TOKEN:
-            # Extract current remote URL
-            remote_url = subprocess.check_output(["git", "remote", "get-url", "origin"]).decode().strip()
-            # If it's an https URL, inject the token
+            try:
+                # Try to get existing URL
+                remote_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL).decode().strip()
+            except Exception:
+                # Fallback: Try to find any remote URL
+                try:
+                    remotes = subprocess.check_output(["git", "remote", "-v"]).decode()
+                    import re
+                    match = re.search(r"https://github\.com/[\w\-/.]+", remotes)
+                    if match:
+                        remote_url = match.group(0)
+                    else:
+                        raise ValueError("No github remote found")
+                except Exception:
+                    # Final Fallback: Use the known repository URL
+                    remote_url = "https://github.com/dacchuvinadodrampura/Algo_strategy_generator.git"
+
+            # Inject the token for authenticated push
             if "https://github.com/" in remote_url:
                 new_url = remote_url.replace("https://github.com/", f"https://{Config.GITHUB_TOKEN}@github.com/")
-                subprocess.run(["git", "remote", "set-url", "origin", new_url], check=False, capture_output=True)
+                # Ensure 'origin' exists or set it correctly
+                subprocess.run(["git", "remote", "remove", "origin"], capture_output=True)
+                subprocess.run(["git", "remote", "add", "origin", new_url], check=True, capture_output=True)
+            elif Config.GITHUB_TOKEN in remote_url:
+                # Token already there, just ensure origin is correct
+                subprocess.run(["git", "remote", "remove", "origin"], capture_output=True)
+                subprocess.run(["git", "remote", "add", "origin", remote_url], check=True, capture_output=True)
 
         # 3. Add Files
         files_to_sync = []
