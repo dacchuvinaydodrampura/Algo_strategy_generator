@@ -26,6 +26,11 @@ class Config:
     # ==========================================================================
     STRATEGIES_PER_CYCLE: int = int(os.getenv("STRATEGIES_PER_CYCLE", "5"))
     STORAGE_PATH: str = os.getenv("STORAGE_PATH", "strategies.json")
+    DNA_MEMORY_PATH: str = "dna_memory.json"
+    
+    # Git Sync Settings
+    GITHUB_TOKEN: str = os.getenv("GITHUB_TOKEN", "")
+    SYNC_ENABLED: bool = os.getenv("SYNC_ENABLED", "true").lower() == "true"
     
     # ==========================================================================
     # BACKTEST PERIODS (days)

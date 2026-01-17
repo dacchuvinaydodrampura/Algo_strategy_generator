@@ -21,8 +21,8 @@ class IntelligenceModule:
     - Optimal R:R ranges
     """
     
-    def __init__(self, memory_path: str = "dna_memory.json"):
-        self.memory_path = memory_path
+    def __init__(self, memory_path: str = None):
+        self.memory_path = memory_path or Config.DNA_MEMORY_PATH
         self.strategies_path = Config.STORAGE_PATH
         self.dna_weights = self._load_memory()
 

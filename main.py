@@ -27,6 +27,7 @@ from consistency_filter import check_consistency
 from strategy_repository import store_strategy
 from telegram_notifier import notify_strategy
 from intelligence_module import train_brain
+from git_sync import sync_to_github
 
 # Configure logging to stdout (Crucial for Render Logs)
 logging.basicConfig(
@@ -123,6 +124,11 @@ def run_cycle():
             # Explicit memory cleanup for 512MB constraint
             import gc
             gc.collect()
+
+        # 🔄 Final Step: Auto-Sync Permanent Memory back to GitHub
+        if passed > 0 or validated > 0:
+            logger.info("📡 GitSync: Backing up Intelligence Memory to GitHub...")
+            sync_to_github()
 
         # Summary
         elapsed = time.time() - start_time
