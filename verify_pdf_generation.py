@@ -16,7 +16,9 @@ def main():
             "bullish_order_block", 
             "volatility_squeeze",
             "market_structure_shift_bullish",
-            "bullish_breaker_retest"
+            "bullish_breaker_retest",
+            "optimal_trade_entry_long",
+            "is_in_discount_zone"
         ],
         exit_rules=["rsi_above_70"],
         stop_loss_logic="1.5x_atr",

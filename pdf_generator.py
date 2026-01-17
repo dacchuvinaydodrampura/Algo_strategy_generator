@@ -84,6 +84,12 @@ def generate_strategy_pdf(strategy: Strategy, result: BacktestResult, filename: 
         explanations.append("MARKET STRUCTURE SHIFT (MSS): Confirmed trend reversal where price breaks a key Swing High/Low responsible for the recent trend.")
     if any("breaker" in r for r in strategy.entry_rules):
         explanations.append("BREAKER BLOCK: A failed Order Block that is reclaimed. Old Support becomes New Resistance (or vice-versa). High probability setup.")
+    if any("is_in_discount" in r for r in strategy.entry_rules):
+        explanations.append("DISCOUNT ZONE FILTRATION: Algo ONLY buys when price is in the lower 50% of the recent range. 'Buy Cheap'.")
+    if any("is_in_premium" in r for r in strategy.entry_rules):
+        explanations.append("PREMIUM ZONE FILTRATION: Algo ONLY sells when price is in the upper 50% of the recent range. 'Sell Expensive'.")
+    if any("optimal_trade_entry" in r for r in strategy.entry_rules):
+        explanations.append("OPTIMAL TRADE ENTRY (OTE): Precision entry at the 61.8-78.6% Fibonacci retracement level of a major impulse leg.")
     
     if not explanations:
         explanations.append("Standard Price Action / Indicator logic.")

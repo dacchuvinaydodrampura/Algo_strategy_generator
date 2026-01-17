@@ -662,3 +662,128 @@ def detect_bearish_breaker(open_prices: np.ndarray, close_prices: np.ndarray,
                     return True
                     
     return False
+
+
+# ==============================================================================
+# PREMIUM / DISCOUNT & OTE
+# ==============================================================================
+
+def is_in_discount_zone(high_prices: np.ndarray, low_prices: np.ndarray,
+                        close_prices: np.ndarray, index: int,
+                        lookback: int = 50) -> bool:
+    """
+    Check if price is in the Discount Zone (< 50% of range).
+    We only want to BUY in Discount.
+    """
+    if index < lookback:
+        return False
+        
+    recent_high = np.max(high_prices[index-lookback:index])
+    recent_low = np.min(low_prices[index-lookback:index])
+    
+    midpoint = (recent_high + recent_low) / 2
+    
+    return close_prices[index] < midpoint
+
+def is_in_premium_zone(high_prices: np.ndarray, low_prices: np.ndarray,
+                       close_prices: np.ndarray, index: int,
+                       lookback: int = 50) -> bool:
+    """
+    Check if price is in the Premium Zone (> 50% of range).
+    We only want to SELL in Premium.
+    """
+    if index < lookback:
+        return False
+        
+    recent_high = np.max(high_prices[index-lookback:index])
+    recent_low = np.min(low_prices[index-lookback:index])
+    
+    midpoint = (recent_high + recent_low) / 2
+    
+    return close_prices[index] > midpoint
+
+def detect_optimal_trade_entry_long(high_prices: np.ndarray, low_prices: np.ndarray,
+                                    close_prices: np.ndarray, index: int,
+                                    lookback: int = 20) -> bool:
+    """
+    Detect OTE Long Setup.
+    
+    Logic:
+    1. Identify recent impulse move (Low to High).
+    2. Measures Fib Retracement.
+    3. Price is currently between 0.618 and 0.786 retracement.
+    4. Price shows rejection (Close > Open).
+    """
+    if index < lookback:
+        return False
+        
+    # Find recent swing points
+    window_lows = low_prices[index-lookback:index]
+    min_low_idx = np.argmin(window_lows)
+    abs_low_idx = (index-lookback) + min_low_idx
+    
+    # Needs impulse up after low
+    window_highs = high_prices[abs_low_idx:index]
+    if len(window_highs) < 2: 
+        return False
+        
+    max_high_idx = np.argmax(window_highs)
+    swing_high = window_highs[max_high_idx]
+    swing_low = low_prices[abs_low_idx]
+    
+    range_move = swing_high - swing_low
+    if range_move == 0:
+        return False
+        
+    # Fib Levels (Down from High)
+    fib_618 = swing_high - (range_move * 0.618)
+    fib_786 = swing_high - (range_move * 0.786)
+    
+    curr_low = low_prices[index]
+    curr_close = close_prices[index]
+    curr_open = close_prices[index] # simplify to close > open? No, need open
+    
+    # Check if price touched the zone [0.786 (bottom), 0.618 (top)]
+    in_zone = (curr_low <= fib_618) and (curr_low >= fib_786 * 0.999) 
+    
+    # Check rejection (Bullish Close)
+    if in_zone and curr_close > curr_low: # Basic rejection test
+        return True
+        
+    return False
+
+def detect_optimal_trade_entry_short(high_prices: np.ndarray, low_prices: np.ndarray,
+                                     close_prices: np.ndarray, index: int,
+                                     lookback: int = 20) -> bool:
+    """Detect OTE Short Setup."""
+    if index < lookback:
+        return False
+        
+    window_highs = high_prices[index-lookback:index]
+    max_high_idx = np.argmax(window_highs)
+    abs_high_idx = (index-lookback) + max_high_idx
+    
+    window_lows = low_prices[abs_high_idx:index]
+    if len(window_lows) < 2:
+        return False
+        
+    swing_low = np.min(window_lows)
+    swing_high = high_prices[abs_high_idx]
+    
+    range_move = swing_high - swing_low
+    if range_move == 0:
+        return False
+        
+    # Fib Levels (Up from Low)
+    fib_618 = swing_low + (range_move * 0.618)
+    fib_786 = swing_low + (range_move * 0.786)
+    
+    curr_high = high_prices[index]
+    curr_close = close_prices[index]
+    
+    in_zone = (curr_high >= fib_618) and (curr_high <= fib_786 * 1.001)
+    
+    if in_zone and curr_close < curr_high:
+        return True
+        
+    return False

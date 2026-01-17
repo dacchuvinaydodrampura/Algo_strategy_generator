@@ -50,6 +50,7 @@ class StrategyValidator:
         # Institutional Pattern Keywords
         "order_block", "sweep", "imbalance", "squeeze",
         "mss", "breaker",
+        "premium", "discount", "ote",
     ]
     
     # Valid timeframes
