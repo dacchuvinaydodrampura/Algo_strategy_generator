@@ -1,0 +1,12 @@
+{
+  "keywords": {
+    "morning_star_pattern": 0.3333,
+    "price_within_0.5pct_of_vwap": 0.3333,
+    "rsi_above_30": 0.3333
+  },
+  "timeframes": {
+    "15m": 1.0
+  },
+  "rr_focus": 1.7,
+  "version": 1.0
+}
