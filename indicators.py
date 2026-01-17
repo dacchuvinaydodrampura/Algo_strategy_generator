@@ -544,3 +544,121 @@ def detect_bearish_order_block(open_prices: np.ndarray, close_prices: np.ndarray
         return True
         
     return False
+
+
+# ==============================================================================
+# ADVANCED MARKET STRUCTURE (MSS & BREAKERS)
+# ==============================================================================
+
+def detect_market_structure_shift_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
+                                          close_prices: np.ndarray, index: int,
+                                          lookback: int = 20) -> bool:
+    """
+    Detect Bullish Market Structure Shift (MSS).
+    
+    Logic:
+    1. Identify the lowest point in the lookback period (Swing Low).
+    2. Identify the highest high *after* that Swing Low (Lower High).
+    3. Price breaks ABOVE that Lower High with a strong close.
+    """
+    if index < lookback:
+        return False
+        
+    # 1. Find the Swing Low
+    window_lows = low_prices[index-lookback:index]
+    min_low_idx = np.argmin(window_lows)
+    abs_low_idx = (index - lookback) + min_low_idx
+    
+    # Needs enough data after low to form a lower high
+    if abs_low_idx >= index - 2:
+        return False
+        
+    # 2. Find High AFTER the Low (The Swing High to break)
+    swing_high = np.max(high_prices[abs_low_idx:index])
+    
+    # 3. Current candle closes well above that high
+    break_level = swing_high
+    curr_close = close_prices[index]
+    
+    # Ensure it's a confirmed break, not just a wick
+    return curr_close > break_level
+
+def detect_market_structure_shift_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
+                                          close_prices: np.ndarray, index: int,
+                                          lookback: int = 20) -> bool:
+    """Detect Bearish Market Structure Shift (MSS)."""
+    if index < lookback:
+        return False
+        
+    window_highs = high_prices[index-lookback:index]
+    max_high_idx = np.argmax(window_highs)
+    abs_high_idx = (index - lookback) + max_high_idx
+    
+    if abs_high_idx >= index - 2:
+        return False
+        
+    swing_low = np.min(low_prices[abs_high_idx:index])
+    
+    curr_close = close_prices[index]
+    return curr_close < swing_low
+
+def detect_bullish_breaker(open_prices: np.ndarray, close_prices: np.ndarray,
+                           high_prices: np.ndarray, low_prices: np.ndarray,
+                           index: int, lookback: int = 10) -> bool:
+    """
+    Detect Bullish Breaker Block.
+    
+    Logic:
+    1. Previously a Bearish Order Block (Red Candle) existed in lookback.
+    2. Price BROKE UP through it (invalidating it as resistance).
+    3. Price has now returned to RETEST that level as Support.
+    """
+    if index < lookback:
+        return False
+        
+    curr_low = low_prices[index]
+    curr_close = close_prices[index]
+    
+    for i in range(1, lookback):
+        idx = index - i
+        # Check if candle was bearish
+        if close_prices[idx] < open_prices[idx]:
+            bearish_high = high_prices[idx]
+            bearish_open = open_prices[idx]
+            
+            # Check if price went significantly ABOVE it in between
+            highest_since = np.max(high_prices[idx+1:index])
+            
+            if highest_since > bearish_high * 1.001: # Clear break
+                # Check for Retest
+                # Current Low touches the "Breaker" zone (High to Open of orig candle)
+                if curr_low <= bearish_high and curr_close >= bearish_open:
+                    return True
+                    
+    return False
+
+def detect_bearish_breaker(open_prices: np.ndarray, close_prices: np.ndarray,
+                           high_prices: np.ndarray, low_prices: np.ndarray,
+                           index: int, lookback: int = 10) -> bool:
+    """Detect Bearish Breaker Block (Support turned Resistance)."""
+    if index < lookback:
+        return False
+        
+    curr_high = high_prices[index]
+    curr_close = close_prices[index]
+    
+    for i in range(1, lookback):
+        idx = index - i
+        # Bullish candle
+        if close_prices[idx] > open_prices[idx]:
+            bullish_low = low_prices[idx]
+            bullish_open = open_prices[idx]
+            
+            lowest_since = np.min(low_prices[idx+1:index])
+            
+            if lowest_since < bullish_low * 0.999: # Clear break down
+                # Retest from below
+                if curr_high >= bullish_low and curr_close <= bullish_open:
+                    return True
+                    
+    return False

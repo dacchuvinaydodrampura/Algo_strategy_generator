@@ -76,6 +76,7 @@ class StrategyGenerator:
     ]
     
     # Institutional / SMC Entries (Higher Win Rate Logic)
+    # Institutional / SMC Entries (Higher Win Rate Logic)
     INSTITUTIONAL_ENTRIES = [
         ("Liquidity Sweep Long", "LONG",
          ["liquidity_sweep_low", "bullish_order_block"]),
@@ -90,13 +91,25 @@ class StrategyGenerator:
          ["price_below_ema_slow", "bearish_order_block"]),
          
         ("FVG Fill Reversal Long", "LONG",
-         ["bullish_imbalance", "rsi_oversold_bounce"]), # requires custom combo
+         ["bullish_imbalance", "rsi_oversold_bounce"]), 
          
         ("Squeeze Breakout Long", "LONG",
          ["volatility_squeeze", "breakout_above_20bar_high"]),
          
         ("Squeeze Breakout Short", "SHORT",
          ["volatility_squeeze", "breakout_below_20bar_low"]),
+
+        ("MSS Aggressive Long", "LONG",
+         ["market_structure_shift_bullish"]),
+
+        ("MSS Aggressive Short", "SHORT",
+         ["market_structure_shift_bearish"]),
+
+        ("Bullish Breaker Re-test", "LONG",
+         ["bullish_breaker_retest"]),
+
+        ("Bearish Breaker Re-test", "SHORT",
+         ["bearish_breaker_retest"]),
     ]
 
     # ==========================================================================

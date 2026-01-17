@@ -49,6 +49,7 @@ class StrategyValidator:
         "hit", "near", "pct", "candle", "bar",
         # Institutional Pattern Keywords
         "order_block", "sweep", "imbalance", "squeeze",
+        "mss", "breaker",
     ]
     
     # Valid timeframes

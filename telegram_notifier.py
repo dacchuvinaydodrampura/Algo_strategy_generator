@@ -118,6 +118,8 @@ class TelegramNotifier:
 <b>Institutional Patterns Detected:</b>
 {'✅ Liquidity Sweeps' if any('sweep' in r for r in strategy.entry_rules) else ''}
 {'✅ Order Blocks' if any('order_block' in r for r in strategy.entry_rules) else ''}
+{'✅ Market Structure Shift (MSS)' if any('market_structure_shift' in r for r in strategy.entry_rules) else ''}
+{'✅ Breaker Blocks' if any('breaker' in r for r in strategy.entry_rules) else ''}
 
 <i>(PDF Report Generation Failed - This is a text backup)</i>
 """

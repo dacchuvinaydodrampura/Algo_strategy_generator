@@ -80,6 +80,10 @@ def generate_strategy_pdf(strategy: Strategy, result: BacktestResult, filename: 
         explanations.append("LIQUIDITY SWEEP: Stop hunt below a key swing low/high followed by a reclaim. Targeted to trap retail traders.")
     if any("imbalance" in r for r in strategy.entry_rules):
         explanations.append("FAIR VALUE GAP (FVG): Price inefficiency caused by aggressive buying/selling. The algorithm targets these gaps for fills.")
+    if any("market_structure_shift" in r for r in strategy.entry_rules):
+        explanations.append("MARKET STRUCTURE SHIFT (MSS): Confirmed trend reversal where price breaks a key Swing High/Low responsible for the recent trend.")
+    if any("breaker" in r for r in strategy.entry_rules):
+        explanations.append("BREAKER BLOCK: A failed Order Block that is reclaimed. Old Support becomes New Resistance (or vice-versa). High probability setup.")
     
     if not explanations:
         explanations.append("Standard Price Action / Indicator logic.")
