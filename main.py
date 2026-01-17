@@ -26,6 +26,7 @@ from backtest_engine import run_backtest
 from consistency_filter import check_consistency
 from strategy_repository import store_strategy
 from telegram_notifier import notify_strategy
+from intelligence_module import train_brain
 
 # Configure logging to stdout (Crucial for Render Logs)
 logging.basicConfig(
@@ -55,6 +56,10 @@ def run_cycle():
     try:
         # Validate configuration
         Config.validate()
+        
+        # 🧠 Intelligence: Learn from past results before generating new ones
+        logger.info("🧠 Brain Sync: Training DNA from market experience...")
+        train_brain()
         
         # Stats for this cycle
         generated = 0

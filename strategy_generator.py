@@ -14,6 +14,7 @@ import random
 from typing import List
 from models import Strategy
 from config import Config
+from intelligence_module import get_market_experience
 
 
 class StrategyGenerator:
@@ -638,16 +639,45 @@ class StrategyGenerator:
     def __init__(self):
         """Initialize the generator."""
         self.generated_count = 0
+        self.dna = get_market_experience()
+
+    def _weighted_choice(self, choices: List[Any], category: str = "keywords") -> Any:
+        """
+        Select a choice based on DNA memory weights.
+        
+        Args:
+            choices: List of options (can be string or tuple)
+            category: 'keywords' or 'timeframes'
+        """
+        weights = self.dna.get(category, {})
+        if not weights:
+            return random.choice(choices)
+
+        # Prepare weights for each choice
+        probs = []
+        for c in choices:
+            # If choice is a tuple (name, rules), weigh by the rules
+            if isinstance(c, tuple):
+                keyword = c[2][0] if len(c) > 2 else c[0]
+            else:
+                keyword = str(c)
+            
+            # Default weight 1.0 (neutral), lookup weighted DNA
+            w = weights.get(keyword, 1.0)
+            
+            # Boost weight slightly if it exists in DNA (Self-Learning)
+            if keyword in weights:
+                w = 1.0 + (weights[keyword] * 2.0)
+            else:
+                w = 1.0
+
+            probs.append(w)
+        
+        return random.choices(choices, weights=probs, k=1)[0]
     
     def generate(self, count: int = 1) -> List[Strategy]:
         """
-        Generate multiple rule-based strategies.
-        
-        Args:
-            count: Number of strategies to generate
-        
-        Returns:
-            List of Strategy objects
+        Generate multiple rule-based strategies with DNA bias.
         """
         strategies = []
         for _ in range(count):
@@ -658,11 +688,11 @@ class StrategyGenerator:
         return strategies
     
     def _generate_single(self) -> Strategy:
-        """Generate a single strategy with random rule combinations."""
+        """Generate a single strategy with learned DNA combinations."""
         
         # Select market and timeframe
         market = random.choice(Config.MARKETS)
-        timeframe = random.choice(Config.TIMEFRAMES)
+        timeframe = self._weighted_choice(Config.TIMEFRAMES, "timeframes")
         
         # Decide on main strategy type
         # 50% Institutional (SMC), 30% Price Action, 20% Technical (EMA/VWAP)
@@ -671,9 +701,9 @@ class StrategyGenerator:
             weights=[0.5, 0.3, 0.2]
         )[0]
         
-        # Select base entry
+        # Select base entry (Weighted by DNA)
         if strategy_type == "institutional":
-             name, direction, entry_rules = random.choice(self.INSTITUTIONAL_ENTRIES)
+             name, direction, entry_rules = self._weighted_choice(self.INSTITUTIONAL_ENTRIES)
              # Enforce Premium/Discount logic (50% chance)
              if random.random() < 0.5:
                  if direction == "LONG" and "is_in_discount_zone" not in entry_rules:
@@ -681,12 +711,12 @@ class StrategyGenerator:
                  elif direction == "SHORT" and "is_in_premium_zone" not in entry_rules:
                      entry_rules = list(entry_rules) + ["is_in_premium_zone"]
         elif strategy_type == "price_action":
-            name, direction, entry_rules = random.choice(self.PRICE_ACTION_ENTRIES)
+            name, direction, entry_rules = self._weighted_choice(self.PRICE_ACTION_ENTRIES)
         else: # technical
             if random.random() < 0.5:
-                name, direction, entry_rules = random.choice(self.VWAP_ENTRIES)
+                name, direction, entry_rules = self._weighted_choice(self.VWAP_ENTRIES)
             else:
-                name, direction, entry_rules = random.choice(self.EMA_ENTRIES)
+                name, direction, entry_rules = self._weighted_choice(self.EMA_ENTRIES)
         
         # Copy rules to avoid mutation
         entry_rules = list(entry_rules)
@@ -707,8 +737,10 @@ class StrategyGenerator:
         ema_fast = random.choice([9, 13])
         ema_slow = random.choice([21, 34])
         
-        # Select risk-reward ratio
-        risk_reward = round(random.uniform(Config.RR_MIN, Config.RR_MAX), 1)
+        # Select risk-reward ratio (Biased by DNA)
+        target_rr = self.dna.get("rr_focus", Config.RR_MIN)
+        # Random variation around target RR
+        risk_reward = round(random.uniform(max(1.5, target_rr - 0.5), min(5.0, target_rr + 2.0)), 1)
         
         # Select stop loss logic
         sl_name, sl_logic = random.choice(self.STOP_LOSS_TYPES)
