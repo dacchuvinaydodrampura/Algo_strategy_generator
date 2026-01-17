@@ -49,7 +49,10 @@ class IntelligenceModule:
             json.dump(self.dna_weights, f, indent=2)
 
     def learn_from_repository(self):
-        """Analyze all stored strategies and update DNA weights."""
+        """
+        Analyze the most recent successful strategies and update DNA weights.
+        Optimized for 512MB RAM using a rolling window.
+        """
         if not os.path.exists(self.strategies_path):
             return
 
@@ -62,11 +65,13 @@ class IntelligenceModule:
         if not strategies:
             return
 
+        # 🧠 RAM Optimization: Use only the last 50 strategies for 'current' market DNA
+        # This prevents the memory usage from growing over time.
+        strategies = strategies[-50:]
+
         # 1. Analyze Keywords
         all_rules = []
         for s in strategies:
-            # Note: stored structure is StoredStrategy.to_dict()
-            # which has "strategy": { ... }
             rules = s.get("strategy", {}).get("entry_rules", [])
             all_rules.extend(rules)
         
@@ -74,7 +79,6 @@ class IntelligenceModule:
         counts = collections.Counter(all_rules)
         total = sum(counts.values())
         
-        # Normalize weights (0.1 to 1.0 range)
         if total > 0:
             self.dna_weights["keywords"] = {k: round(v/total, 4) for k, v in counts.items()}
 
@@ -90,7 +94,14 @@ class IntelligenceModule:
             self.dna_weights["rr_focus"] = round(sum(rr_vals) / len(rr_vals), 2)
 
         self._save_memory()
-        print(f"🧠 Intelligence: Learned from {len(strategies)} strategies. DNA Memory updated.")
+        
+        # Explicit cleanup for 512MB RAM protection
+        count = len(strategies)
+        del strategies
+        import gc
+        gc.collect()
+        
+        print(f"🧠 Intelligence: Learned from {count} most recent strategies. DNA Memory updated.")
 
     def get_weights(self) -> Dict[str, Any]:
         """Return the calculated weights for the generator."""
