@@ -47,7 +47,7 @@ def sync_to_github():
         if not files_to_sync:
             return False
 
-        subprocess.run(["git", "add"] + files_to_sync, check=True, capture_output=True)
+        subprocess.run(["git", "add", "-f"] + files_to_sync, check=True, capture_output=True)
 
         # 4. Commit
         from strategy_repository import get_stored_count

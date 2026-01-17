@@ -8,4 +8,4 @@ venv/
 .idea/
 .vscode/
 *.log
-strategies.json
+# strategies.json (Removed to allow Auto-Sync)
