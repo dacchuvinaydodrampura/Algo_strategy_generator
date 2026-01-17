@@ -47,7 +47,7 @@ def sync_to_github():
                         raise ValueError("No github remote found")
                 except Exception:
                     # Final Fallback: Use the known repository URL
-                    remote_url = "https://github.com/dacchuvinadodrampura/Algo_strategy_generator.git"
+                    remote_url = "https://github.com/dacchuvinaydodrampura/Algo_strategy_generator.git"
 
             # Inject the token for authenticated push
             if "https://github.com/" in remote_url:
