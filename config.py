@@ -20,6 +20,7 @@ class Config:
     # ==========================================================================
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     
     # ==========================================================================
     # ENGINE SETTINGS

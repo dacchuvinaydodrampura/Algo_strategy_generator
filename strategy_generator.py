@@ -675,35 +675,62 @@ class StrategyGenerator:
         
         return random.choices(choices, weights=probs, k=1)[0]
     
-    def generate(self, count: int = 1) -> List[Strategy]:
+    def generate(self, count: int = 1, ai_insight: dict = None) -> List[Strategy]:
         """
-        Generate multiple rule-based strategies with DNA bias.
+        Generate multiple rule-based strategies with DNA and AI bias.
         """
         strategies = []
         for _ in range(count):
-            strategy = self._generate_single()
+            strategy = self._generate_single(ai_insight)
             strategies.append(strategy)
             self.generated_count += 1
         
         return strategies
     
-    def _generate_single(self) -> Strategy:
-        """Generate a single strategy with learned DNA combinations."""
+    def _generate_single(self, ai_insight: dict = None) -> Strategy:
+        """Generate a single strategy with learned DNA and AI combinations."""
         
-        # Select market and timeframe
+        # 🧠 AI-Driven Bias Integration
+        ai_insight = ai_insight or {}
+        ai_sentiment = ai_insight.get("sentiment", "NEUTRAL")
+        ai_mode = ai_insight.get("mode", "TREND")
+        ai_focus = ai_insight.get("concept_focus", "INSTITUTIONAL")
+
+        # Select market and timeframe (Biased by AI mode)
         market = random.choice(Config.MARKETS)
-        timeframe = self._weighted_choice(Config.TIMEFRAMES, "timeframes")
         
-        # Decide on main strategy type
-        # 50% Institutional (SMC), 30% Price Action, 20% Technical (EMA/VWAP)
-        strategy_type = random.choices(
-            ["institutional", "price_action", "technical"],
-            weights=[0.5, 0.3, 0.2]
-        )[0]
+        timeframes = Config.TIMEFRAMES
+        if ai_mode == "SCALPING":
+            # Force/Bias towards 1m and 5m
+            timeframes = ["1m", "5m"]
         
-        # Select base entry (Weighted by DNA)
+        timeframe = self._weighted_choice(timeframes, "timeframes")
+        
+        # Decide on main strategy type (Biased by AI Focus)
+        # Defaults: 50% Institutional (SMC), 30% Price Action, 20% Technical
+        types = ["institutional", "price_action", "technical"]
+        weights = [0.5, 0.3, 0.2]
+        
+        if ai_focus == "INSTITUTIONAL":
+            weights = [0.7, 0.2, 0.1]
+        elif ai_focus == "PRICE_ACTION":
+            weights = [0.2, 0.7, 0.1]
+            
+        strategy_type = random.choices(types, weights=weights)[0]
+        
+        # Select base entry (Weighted by DNA and filtered by AI Sentiment)
+        # Try to find a direction matching AI sentiment if not NEUTRAL
+        def get_direction_bias(choices):
+            if ai_sentiment == "BULLISH":
+                bullish = [c for c in choices if c[1] == "LONG"]
+                return bullish if bullish else choices
+            elif ai_sentiment == "BEARISH":
+                bearish = [c for c in choices if c[1] == "SHORT"]
+                return bearish if bearish else choices
+            return choices
+
         if strategy_type == "institutional":
-             name, direction, entry_rules = self._weighted_choice(self.INSTITUTIONAL_ENTRIES)
+             name, direction, entry_rules = self._weighted_choice(get_direction_bias(self.INSTITUTIONAL_ENTRIES))
              # Enforce Premium/Discount logic (50% chance)
              if random.random() < 0.5:
                  if direction == "LONG" and "is_in_discount_zone" not in entry_rules:
@@ -711,12 +738,12 @@ class StrategyGenerator:
                  elif direction == "SHORT" and "is_in_premium_zone" not in entry_rules:
                      entry_rules = list(entry_rules) + ["is_in_premium_zone"]
         elif strategy_type == "price_action":
-            name, direction, entry_rules = self._weighted_choice(self.PRICE_ACTION_ENTRIES)
+            name, direction, entry_rules = self._weighted_choice(get_direction_bias(self.PRICE_ACTION_ENTRIES))
         else: # technical
             if random.random() < 0.5:
-                name, direction, entry_rules = self._weighted_choice(self.VWAP_ENTRIES)
+                name, direction, entry_rules = self._weighted_choice(get_direction_bias(self.VWAP_ENTRIES))
             else:
-                name, direction, entry_rules = self._weighted_choice(self.EMA_ENTRIES)
+                name, direction, entry_rules = self._weighted_choice(get_direction_bias(self.EMA_ENTRIES))
         
         # Copy rules to avoid mutation
         entry_rules = list(entry_rules)
@@ -784,16 +811,17 @@ class StrategyGenerator:
 _generator = StrategyGenerator()
 
 
-def generate_strategies(count: int = None) -> List[Strategy]:
+def generate_strategies(count: int = None, ai_insight: dict = None) -> List[Strategy]:
     """
-    Convenience function to generate strategies.
+    Convenience function to generate strategies with optional AI insights.
     
     Args:
         count: Number of strategies (defaults to config value)
+        ai_insight: Optional AI market bias
     
     Returns:
         List of Strategy objects
     """
     if count is None:
         count = Config.STRATEGIES_PER_CYCLE
-    return _generator.generate(count)
+    return _generator.generate(count, ai_insight)

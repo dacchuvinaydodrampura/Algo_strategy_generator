@@ -28,6 +28,7 @@ from strategy_repository import store_strategy
 from telegram_notifier import notify_strategy
 from intelligence_module import train_brain
 from git_sync import sync_to_github
+from ai_module import get_ai_insight
 
 # Configure logging to stdout (Crucial for Render Logs)
 logging.basicConfig(
@@ -69,9 +70,13 @@ def run_cycle():
         passed = 0
         notified = 0
 
+        # 🌐 AI Internet Brain: Consult Gemini for Market Context
+        logger.info("🌐 AI Brain: Consulting Google Gemini for Internet Market Context...")
+        ai_insight = get_ai_insight()
+        
         # Step 1: Generate strategies
-        logger.info(f"📝 Generating {Config.STRATEGIES_PER_CYCLE} strategies...")
-        strategies = generate_strategies(Config.STRATEGIES_PER_CYCLE)
+        logger.info(f"📝 Generating {Config.STRATEGIES_PER_CYCLE} strategies using AI Bias...")
+        strategies = generate_strategies(Config.STRATEGIES_PER_CYCLE, ai_insight)
         generated = len(strategies)
         
         for i, s in enumerate(strategies):
