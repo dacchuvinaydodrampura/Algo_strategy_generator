@@ -84,9 +84,9 @@ def sync_to_github():
         subprocess.run(["git", "commit", "-m", commit_msg], check=True, capture_output=True)
 
         # 5. Push
-        # We use --force if on Render to ensure memory is always canonical
-        push_cmd = ["git", "push"]
-        result = subprocess.run(push_cmd, check=True, capture_output=True)
+        # Use HEAD:main to ensure it works even in detached HEAD state on Render
+        push_cmd = ["git", "push", "origin", "HEAD:main"]
+        subprocess.run(push_cmd, check=True, capture_output=True)
         
         logger.info(f"💾 GitSync: Experience pushed to GitHub. [Lib Size: {count}]")
         return True
