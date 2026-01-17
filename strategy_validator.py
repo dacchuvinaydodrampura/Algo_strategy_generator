@@ -47,6 +47,8 @@ class StrategyValidator:
         "high", "low", "support", "resistance", "swing",
         "band", "upper", "lower", "between", "within",
         "hit", "near", "pct", "candle", "bar",
+        # Institutional Pattern Keywords
+        "order_block", "sweep", "imbalance", "squeeze",
     ]
     
     # Valid timeframes
