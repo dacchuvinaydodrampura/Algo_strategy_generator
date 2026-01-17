@@ -1990,7 +1990,7 @@ def detect_smt_divergence_bearish(open_prices: np.ndarray, close_prices: np.ndar
             
     return False
 
-def detect_macro_macro_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+def detect_macro_cycle_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
                                high_prices: np.ndarray, low_prices: np.ndarray,
                                index: int) -> bool:
     """
@@ -2007,7 +2007,7 @@ def detect_macro_macro_bullish(open_prices: np.ndarray, close_prices: np.ndarray
         return True
     return False
 
-def detect_macro_macro_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+def detect_macro_cycle_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
                                high_prices: np.ndarray, low_prices: np.ndarray,
                                index: int) -> bool:
     if (index % 60) >= 50 and (index % 60) <= 59:

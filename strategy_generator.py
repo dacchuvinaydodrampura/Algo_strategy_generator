@@ -113,10 +113,10 @@ class StrategyGenerator:
          ["detect_bearish_breaker"]),
          
         ("OTE Pullback Long", "LONG",
-         ["detect_optimal_trade_entry_long", "detect_discount_zone"]),
+         ["detect_ote_entry_bullish", "detect_discount_zone"]),
          
         ("OTE Pullback Short", "SHORT",
-         ["detect_optimal_trade_entry_short", "detect_premium_zone"]),
+         ["detect_ote_entry_bearish", "detect_premium_zone"]),
 
         ("Inducement Trap Long", "LONG",
          ["detect_inducement_bullish", "detect_bullish_order_block"]),
@@ -173,7 +173,7 @@ class StrategyGenerator:
          ["detect_liquidity_void_bearish"]),
 
         ("Balanced Price Range (BPR)", "LONG",
-         ["detect_balanced_price_range", "price_above_ema_fast"]), # Context needed
+         ["detect_balanced_price_range_bullish", "price_above_ema_fast"]), # Context needed
 
         ("Volume Imbalance Gap", "LONG",
          ["detect_volume_imbalance_bullish"]),
@@ -269,10 +269,10 @@ class StrategyGenerator:
          ["detect_smt_divergence_bearish"]),
 
         ("Macro Cycle Burst Long", "LONG",
-         ["detect_macro_macro_bullish"]),
+         ["detect_macro_cycle_bullish"]),
         
         ("Macro Cycle Burst Short", "SHORT",
-         ["detect_macro_macro_bearish"]),
+         ["detect_macro_cycle_bearish"]),
 
         ("Liquidity Run Reversal Long (Fade)", "LONG",
          ["detect_liquidity_run_bullish"]),
@@ -515,7 +515,7 @@ class StrategyGenerator:
          ["detect_poc_level_rejection_bearish"]),
 
         ("Poor High Target (Unfinished Auction)", "LONG",
-         ["detect_poor_high_low_bullish_v2"]),
+         ["detect_poor_high_low_bullish"]),
 
         ("Poor Low Target (Unfinished Auction)", "SHORT",
          ["detect_poor_high_low_bearish"]),
@@ -733,10 +733,10 @@ class StrategyGenerator:
              name, direction, entry_rules = self._weighted_choice(get_direction_bias(self.INSTITUTIONAL_ENTRIES))
              # Enforce Premium/Discount logic (50% chance)
              if random.random() < 0.5:
-                 if direction == "LONG" and "is_in_discount_zone" not in entry_rules:
-                     entry_rules = list(entry_rules) + ["is_in_discount_zone"]
-                 elif direction == "SHORT" and "is_in_premium_zone" not in entry_rules:
-                     entry_rules = list(entry_rules) + ["is_in_premium_zone"]
+                 if direction == "LONG" and "detect_discount_zone" not in entry_rules:
+                     entry_rules = list(entry_rules) + ["detect_discount_zone"]
+                 elif direction == "SHORT" and "detect_premium_zone" not in entry_rules:
+                     entry_rules = list(entry_rules) + ["detect_premium_zone"]
         elif strategy_type == "price_action":
             name, direction, entry_rules = self._weighted_choice(get_direction_bias(self.PRICE_ACTION_ENTRIES))
         else: # technical
