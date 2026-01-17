@@ -6,6 +6,7 @@ Designed for backtesting integrity.
 """
 
 import numpy as np
+from datetime import datetime
 from typing import Tuple, Optional
 
 
