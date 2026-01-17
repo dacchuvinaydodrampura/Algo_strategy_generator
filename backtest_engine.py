@@ -14,6 +14,7 @@ No look-ahead bias. Uses only past data for signals.
 """
 
 import numpy as np
+from datetime import datetime
 from typing import List, Dict, Optional
 from models import Strategy, Trade, PeriodResult, BacktestResult
 from data_provider import OHLCVData
@@ -138,7 +139,8 @@ class BacktestEngine:
         
         for i in range(start_idx, len(data.close)):
             current_price = data.close[i]
-            current_time = str(data.timestamps[i]) if data.timestamps is not None else str(i)
+            cur_ts = data.timestamps[i] if hasattr(data, 'timestamps') and data.timestamps is not None else None
+            current_time = str(cur_ts) if cur_ts is not None else str(i)
             
             # Check for exit first if in position
             if position is not None:
@@ -278,49 +280,25 @@ class BacktestEngine:
                         if price >= vwap_val:
                             return None
             
-            # Price action candle patterns
-            if "bullish_engulfing" in rule_lower:
-                if not indicators.is_bullish_engulfing(data.open, data.close, data.high, data.low, idx):
-                    return None
-            elif "bearish_engulfing" in rule_lower:
-                if not indicators.is_bearish_engulfing(data.open, data.close, data.high, data.low, idx):
-                    return None
+            # --- TIME-BASED RULES (Manual Mapping) ---
+            if "kill_zone" in rule_lower:
+                if data.timestamps is not None:
+                    try:
+                        ts = datetime.fromisoformat(str(data.timestamps[idx]))
+                        if not indicators.detect_kill_zone(ts):
+                            return None
+                    except:
+                        pass # Non-standard timestamp format, skip rule
             
-            # Inside bar
-            if "inside_bar" in rule_lower:
-                if not indicators.is_inside_bar(data.high, data.low, idx):
-                    return None
+            # --- MISC RULES ---
+            if "rsi_oversold_bounce" in rule_lower:
+                rsi_vals = ind.get("rsi")
+                if rsi_vals is not None and not np.isnan(rsi_vals[idx]):
+                    if rsi_vals[idx] > 30: # Not oversold
+                         return None
             
-            # Morning Star
-            if "morning_star_pattern" in rule_lower:
-                if not indicators.is_morning_star(data.open, data.close, data.high, data.low, idx):
-                    return None
-            
-            # --- MANUALLY MAPPED SMC PATTERNS ---
-            if "bullish_imbalance" in rule_lower:
-                if not indicators.detect_bullish_imbalance(data.open, data.close, data.high, data.low, idx):
-                    return None
-            elif "bearish_imbalance" in rule_lower:
-                if not indicators.detect_bearish_imbalance(data.open, data.close, data.high, data.low, idx):
-                    return None
-                    
-            if "bullish_order_block" in rule_lower:
-                if not indicators.detect_bullish_order_block(data.open, data.close, idx):
-                    return None
-            elif "bearish_order_block" in rule_lower:
-                if not indicators.detect_bearish_order_block(data.open, data.close, idx):
-                    return None
-            
-            if "liquidity_sweep_low" in rule_lower:
-                if not indicators.detect_liquidity_sweep_low(data.high, data.low, data.close, idx):
-                    return None
-            elif "liquidity_sweep_high" in rule_lower:
-                if not indicators.detect_liquidity_sweep_high(data.high, data.low, data.close, idx):
-                    return None
-                    
-            if "volatility_squeeze" in rule_lower:
-                if not indicators.detect_volatility_squeeze(data.high, data.low, data.close, idx):
-                    return None
+            # --- LEGACY / SIMPLE MAPPINGS ---
+            # (Handled by Dynamic Mapper if named detect_X)
 
         
         # If all conditions passed, determine direction

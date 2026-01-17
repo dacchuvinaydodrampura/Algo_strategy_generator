@@ -35,21 +35,21 @@ class StrategyGenerator:
     # Price Action entries (70% weight)
     PRICE_ACTION_ENTRIES = [
         ("Bullish Engulfing at Support", "LONG", 
-         ["bullish_engulfing", "price_near_support"]),
+         ["detect_bullish_engulfing", "price_near_support"]),
         ("Bearish Engulfing at Resistance", "SHORT", 
-         ["bearish_engulfing", "price_near_resistance"]),
+         ["detect_bearish_engulfing", "price_near_resistance"]),
         ("Inside Bar Breakout Long", "LONG", 
-         ["inside_bar_breakout_up"]),
+         ["detect_inside_bar", "breakout_above_20bar_high"]),
         ("Inside Bar Breakout Short", "SHORT", 
-         ["inside_bar_breakout_down"]),
+         ["detect_inside_bar", "breakout_below_20bar_low"]),
         ("Range Breakout Long", "LONG", 
          ["breakout_above_20bar_high"]),
         ("Range Breakout Short", "SHORT", 
          ["breakout_below_20bar_low"]),
         ("Morning Star Reversal", "LONG", 
-         ["morning_star_pattern"]),
-        ("Evening Star Reversal", "SHORT", 
-         ["evening_star_pattern"]),
+         ["detect_morning_star"]),
+        ("Pin Bar Reversal Long", "LONG", 
+         ["detect_bullish_pin_bar"]),
     ]
     
     # VWAP entries
@@ -80,49 +80,49 @@ class StrategyGenerator:
     # Institutional / SMC Entries (Higher Win Rate Logic)
     INSTITUTIONAL_ENTRIES = [
         ("Liquidity Sweep Long", "LONG",
-         ["liquidity_sweep_low", "bullish_order_block"]),
+         ["detect_liquidity_sweep_low", "detect_bullish_order_block"]),
          
         ("Liquidity Sweep Short", "SHORT",
-         ["liquidity_sweep_high", "bearish_order_block"]),
+         ["detect_liquidity_sweep_high", "detect_bearish_order_block"]),
          
         ("Order Block Re-test Long", "LONG",
-         ["price_above_ema_slow", "bullish_order_block"]),
+         ["price_above_ema_slow", "detect_bullish_order_block"]),
          
         ("Order Block Re-test Short", "SHORT",
-         ["price_below_ema_slow", "bearish_order_block"]),
+         ["price_below_ema_slow", "detect_bearish_order_block"]),
          
         ("FVG Fill Reversal Long", "LONG",
-         ["bullish_imbalance", "rsi_oversold_bounce"]), 
+         ["detect_bullish_imbalance", "rsi_oversold_bounce"]), 
          
         ("Squeeze Breakout Long", "LONG",
-         ["volatility_squeeze", "breakout_above_20bar_high"]),
+         ["detect_volatility_squeeze", "breakout_above_20bar_high"]),
          
         ("Squeeze Breakout Short", "SHORT",
-         ["volatility_squeeze", "breakout_below_20bar_low"]),
+         ["detect_volatility_squeeze", "breakout_below_20bar_low"]),
 
         ("MSS Aggressive Long", "LONG",
-         ["market_structure_shift_bullish"]),
+         ["detect_market_structure_shift_bullish"]),
 
         ("MSS Aggressive Short", "SHORT",
-         ["market_structure_shift_bearish"]),
+         ["detect_market_structure_shift_bearish"]),
 
         ("Bullish Breaker Re-test", "LONG",
-         ["bullish_breaker_retest"]),
+         ["detect_bullish_breaker"]),
 
         ("Bearish Breaker Re-test", "SHORT",
-         ["bearish_breaker_retest"]),
+         ["detect_bearish_breaker"]),
          
         ("OTE Pullback Long", "LONG",
-         ["optimal_trade_entry_long", "is_in_discount_zone"]),
+         ["detect_optimal_trade_entry_long", "detect_discount_zone"]),
          
         ("OTE Pullback Short", "SHORT",
-         ["optimal_trade_entry_short", "is_in_premium_zone"]),
+         ["detect_optimal_trade_entry_short", "detect_premium_zone"]),
 
         ("Inducement Trap Long", "LONG",
-         ["detect_inducement_bullish", "bullish_order_block"]),
+         ["detect_inducement_bullish", "detect_bullish_order_block"]),
 
         ("Inducement Trap Short", "SHORT",
-         ["detect_inducement_bearish", "bearish_order_block"]),
+         ["detect_inducement_bearish", "detect_bearish_order_block"]),
 
         ("Aggressive CHoCH Long", "LONG",
          ["detect_choch_bullish"]),

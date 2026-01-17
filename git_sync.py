@@ -51,7 +51,10 @@ def sync_to_github():
 
             # Inject the token for authenticated push
             if "https://github.com/" in remote_url:
-                new_url = remote_url.replace("https://github.com/", f"https://{Config.GITHUB_TOKEN}@github.com/")
+                # Sanitize: Remove trailing slashes which cause 'Repo not found' errors
+                base_url = remote_url.split(".git")[0]
+                new_url = f"https://{Config.GITHUB_TOKEN}@github.com/{base_url.split('github.com/')[1]}.git"
+                
                 # Ensure 'origin' exists or set it correctly
                 subprocess.run(["git", "remote", "remove", "origin"], capture_output=True)
                 subprocess.run(["git", "remote", "add", "origin", new_url], check=True, capture_output=True)

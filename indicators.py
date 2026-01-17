@@ -229,9 +229,9 @@ def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray,
     return result
 
 
-def is_bullish_engulfing(open_prices: np.ndarray, close_prices: np.ndarray,
-                          high_prices: np.ndarray, low_prices: np.ndarray,
-                          index: int) -> bool:
+def detect_bullish_engulfing(open_prices: np.ndarray, close_prices: np.ndarray,
+                           high_prices: np.ndarray, low_prices: np.ndarray,
+                           index: int) -> bool:
     """
     Check for bullish engulfing pattern at given index.
     
@@ -259,9 +259,9 @@ def is_bullish_engulfing(open_prices: np.ndarray, close_prices: np.ndarray,
     return False
 
 
-def is_bearish_engulfing(open_prices: np.ndarray, close_prices: np.ndarray,
-                          high_prices: np.ndarray, low_prices: np.ndarray,
-                          index: int) -> bool:
+def detect_bearish_engulfing(open_prices: np.ndarray, close_prices: np.ndarray,
+                           high_prices: np.ndarray, low_prices: np.ndarray,
+                           index: int) -> bool:
     """
     Check for bearish engulfing pattern at given index.
     """
@@ -284,8 +284,9 @@ def is_bearish_engulfing(open_prices: np.ndarray, close_prices: np.ndarray,
     return False
 
 
-def is_inside_bar(high_prices: np.ndarray, low_prices: np.ndarray, 
-                  index: int) -> bool:
+def detect_inside_bar(open_prices: np.ndarray, close_prices: np.ndarray,
+                   high_prices: np.ndarray, low_prices: np.ndarray, 
+                   index: int) -> bool:
     """
     Check for inside bar pattern at given index.
     
@@ -327,9 +328,9 @@ def detect_breakout(high_prices: np.ndarray, low_prices: np.ndarray,
     return bullish_breakout, bearish_breakout
 
 
-def is_morning_star(open_prices: np.ndarray, close_prices: np.ndarray,
-                     high_prices: np.ndarray, low_prices: np.ndarray,
-                     index: int) -> bool:
+def detect_morning_star(open_prices: np.ndarray, close_prices: np.ndarray,
+                      high_prices: np.ndarray, low_prices: np.ndarray,
+                      index: int) -> bool:
     """
     Check for Morning Star pattern at given index.
     
@@ -419,9 +420,9 @@ def detect_bearish_imbalance(open_prices: np.ndarray, close_prices: np.ndarray,
     gap_size = low1 - high3
     return gap_size > price_threshold
 
-def detect_liquidity_sweep_low(high_prices: np.ndarray, low_prices: np.ndarray,
-                               close_prices: np.ndarray, index: int,
-                               lookback: int = 20) -> bool:
+def detect_liquidity_sweep_low(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int, lookback: int = 20) -> bool:
     """
     Detect Bullish Liquidity Sweep (Stop Hunt).
     
@@ -447,9 +448,9 @@ def detect_liquidity_sweep_low(high_prices: np.ndarray, low_prices: np.ndarray,
     
     return swept_liquidity and reclaimed_level
 
-def detect_liquidity_sweep_high(high_prices: np.ndarray, low_prices: np.ndarray,
-                                close_prices: np.ndarray, index: int,
-                                lookback: int = 20) -> bool:
+def detect_liquidity_sweep_high(open_prices: np.ndarray, close_prices: np.ndarray,
+                                high_prices: np.ndarray, low_prices: np.ndarray,
+                                index: int, lookback: int = 20) -> bool:
     """
     Detect Bearish Liquidity Sweep (Stop Hunt).
     
@@ -471,9 +472,9 @@ def detect_liquidity_sweep_high(high_prices: np.ndarray, low_prices: np.ndarray,
     
     return swept_liquidity and reclaimed_level
 
-def detect_volatility_squeeze(high_prices: np.ndarray, low_prices: np.ndarray,
-                              close_prices: np.ndarray, index: int, 
-                              period: int = 20) -> bool:
+def detect_volatility_squeeze(open_prices: np.ndarray, close_prices: np.ndarray,
+                              high_prices: np.ndarray, low_prices: np.ndarray, 
+                              index: int, period: int = 20) -> bool:
     """
     Detect Volatility Squeeze (Bollinger Band Squeeze).
     
@@ -495,6 +496,7 @@ def detect_volatility_squeeze(high_prices: np.ndarray, low_prices: np.ndarray,
     return current_range < (avg_range * 0.5)
 
 def detect_bullish_order_block(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
                                index: int) -> bool:
     """
     Detect Bullish Order Block formation.
@@ -524,6 +526,7 @@ def detect_bullish_order_block(open_prices: np.ndarray, close_prices: np.ndarray
     return False
 
 def detect_bearish_order_block(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
                                index: int) -> bool:
     """
     Detect Bearish Order Block formation.
@@ -551,9 +554,9 @@ def detect_bearish_order_block(open_prices: np.ndarray, close_prices: np.ndarray
 # ADVANCED MARKET STRUCTURE (MSS & BREAKERS)
 # ==============================================================================
 
-def detect_market_structure_shift_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
-                                          close_prices: np.ndarray, index: int,
-                                          lookback: int = 20) -> bool:
+def detect_market_structure_shift_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                          high_prices: np.ndarray, low_prices: np.ndarray, 
+                                          index: int, lookback: int = 20) -> bool:
     """
     Detect Bullish Market Structure Shift (MSS).
     
@@ -584,9 +587,9 @@ def detect_market_structure_shift_bullish(high_prices: np.ndarray, low_prices: n
     # Ensure it's a confirmed break, not just a wick
     return curr_close > break_level
 
-def detect_market_structure_shift_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
-                                          close_prices: np.ndarray, index: int,
-                                          lookback: int = 20) -> bool:
+def detect_market_structure_shift_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                          high_prices: np.ndarray, low_prices: np.ndarray, 
+                                          index: int, lookback: int = 20) -> bool:
     """Detect Bearish Market Structure Shift (MSS)."""
     if index < lookback:
         return False
@@ -669,9 +672,9 @@ def detect_bearish_breaker(open_prices: np.ndarray, close_prices: np.ndarray,
 # PREMIUM / DISCOUNT & OTE
 # ==============================================================================
 
-def is_in_discount_zone(high_prices: np.ndarray, low_prices: np.ndarray,
-                        close_prices: np.ndarray, index: int,
-                        lookback: int = 50) -> bool:
+def detect_discount_zone(open_prices: np.ndarray, close_prices: np.ndarray,
+                        high_prices: np.ndarray, low_prices: np.ndarray, 
+                        index: int, lookback: int = 50) -> bool:
     """
     Check if price is in the Discount Zone (< 50% of range).
     We only want to BUY in Discount.
@@ -686,9 +689,9 @@ def is_in_discount_zone(high_prices: np.ndarray, low_prices: np.ndarray,
     
     return close_prices[index] < midpoint
 
-def is_in_premium_zone(high_prices: np.ndarray, low_prices: np.ndarray,
-                       close_prices: np.ndarray, index: int,
-                       lookback: int = 50) -> bool:
+def detect_premium_zone(open_prices: np.ndarray, close_prices: np.ndarray,
+                       high_prices: np.ndarray, low_prices: np.ndarray, 
+                       index: int, lookback: int = 50) -> bool:
     """
     Check if price is in the Premium Zone (> 50% of range).
     We only want to SELL in Premium.
@@ -703,9 +706,9 @@ def is_in_premium_zone(high_prices: np.ndarray, low_prices: np.ndarray,
     
     return close_prices[index] > midpoint
 
-def detect_optimal_trade_entry_long(high_prices: np.ndarray, low_prices: np.ndarray,
-                                    close_prices: np.ndarray, index: int,
-                                    lookback: int = 20) -> bool:
+def detect_optimal_trade_entry_long(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
+                                    index: int, lookback: int = 20) -> bool:
     """
     Detect OTE Long Setup.
     
@@ -753,9 +756,9 @@ def detect_optimal_trade_entry_long(high_prices: np.ndarray, low_prices: np.ndar
         
     return False
 
-def detect_optimal_trade_entry_short(high_prices: np.ndarray, low_prices: np.ndarray,
-                                     close_prices: np.ndarray, index: int,
-                                     lookback: int = 20) -> bool:
+def detect_optimal_trade_entry_short(open_prices: np.ndarray, close_prices: np.ndarray,
+                                     high_prices: np.ndarray, low_prices: np.ndarray,
+                                     index: int, lookback: int = 20) -> bool:
     """Detect OTE Short Setup."""
     if index < lookback:
         return False
@@ -794,7 +797,8 @@ def detect_optimal_trade_entry_short(high_prices: np.ndarray, low_prices: np.nda
 # INDUCEMENT (IDM) & TIME LOGIC
 # ==============================================================================
 
-def detect_inducement_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
+def detect_inducement_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                              high_prices: np.ndarray, low_prices: np.ndarray,
                               index: int, lookback: int = 10) -> bool:
     """
     Detect Bullish Inducement (IDM).
@@ -822,8 +826,9 @@ def detect_inducement_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
     
     return sweep and reclaim
 
-def detect_inducement_bearish(high_prices: np.ndarray, close_prices: np.ndarray,
-                              index: int, lookback: int = 10) -> bool:
+def detect_inducement_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int, lookback: int = 10) -> bool:
     """Detect Bearish Inducement (IDM)."""
     if index < lookback:
         return False
@@ -839,7 +844,7 @@ def detect_inducement_bearish(high_prices: np.ndarray, close_prices: np.ndarray,
     
     return sweep and reclaim
 
-def is_in_kill_zone(current_timestamp: datetime, market: str = "NSE") -> bool:
+def detect_kill_zone(current_timestamp: datetime, market: str = "NSE") -> bool:
     """
     Check if current time is within a High-Volume 'Kill Zone'.
     
@@ -868,9 +873,9 @@ def is_in_kill_zone(current_timestamp: datetime, market: str = "NSE") -> bool:
 # CHOCH & MITIGATION
 # ==============================================================================
 
-def detect_choch_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
-                         close_prices: np.ndarray, index: int,
-                         lookback: int = 10) -> bool:
+def detect_choch_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                         high_prices: np.ndarray, low_prices: np.ndarray, 
+                         index: int, lookback: int = 10) -> bool:
     """
     Detect Bullish Change of Character (CHoCH).
     
@@ -896,9 +901,9 @@ def detect_choch_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
         
     return False
 
-def detect_choch_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
-                         close_prices: np.ndarray, index: int,
-                         lookback: int = 10) -> bool:
+def detect_choch_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                         high_prices: np.ndarray, low_prices: np.ndarray, 
+                         index: int, lookback: int = 10) -> bool:
     """Detect Bearish CHoCH."""
     if index < lookback:
         return False
@@ -948,9 +953,9 @@ def detect_mitigation_block_bearish(open_prices: np.ndarray, close_prices: np.nd
 # AMD (POWER OF 3) & INVERTED FVG
 # ==============================================================================
 
-def detect_amd_bullish(open_prices: np.ndarray, low_prices: np.ndarray,
-                       close_prices: np.ndarray, index: int,
-                       lookback: int = 15) -> bool:
+def detect_amd_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                       high_prices: np.ndarray, low_prices: np.ndarray, 
+                       index: int, lookback: int = 15) -> bool:
     """
     Detect AMD Bullish (Accumulation -> Manipulation -> Distribution).
     
@@ -978,9 +983,9 @@ def detect_amd_bullish(open_prices: np.ndarray, low_prices: np.ndarray,
     
     return manipulation_drop and reclaim
 
-def detect_amd_bearish(open_prices: np.ndarray, high_prices: np.ndarray,
-                       close_prices: np.ndarray, index: int,
-                       lookback: int = 15) -> bool:
+def detect_amd_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                       high_prices: np.ndarray, low_prices: np.ndarray, 
+                       index: int, lookback: int = 15) -> bool:
     """Detect AMD Bearish."""
     if index < lookback:
         return False
@@ -1053,9 +1058,9 @@ def detect_inverted_fvg_bearish(open_prices: np.ndarray, close_prices: np.ndarra
 # TURTLE SOUP & REJECTION BLOCKS
 # ==============================================================================
 
-def detect_turtle_soup_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
-                               close_prices: np.ndarray, index: int,
-                               lookback: int = 20) -> bool:
+def detect_turtle_soup_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int, lookback: int = 20) -> bool:
     """
     Detect Bullish Turtle Soup.
     
@@ -1081,9 +1086,9 @@ def detect_turtle_soup_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
     
     return sweep and reclaim
 
-def detect_turtle_soup_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
-                               close_prices: np.ndarray, index: int,
-                               lookback: int = 20) -> bool:
+def detect_turtle_soup_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int, lookback: int = 20) -> bool:
     """Detect Bearish Turtle Soup."""
     if index < lookback:
         return False
@@ -1152,6 +1157,7 @@ def detect_rejection_block_bearish(open_prices: np.ndarray, close_prices: np.nda
 # ==============================================================================
 
 def detect_propulsion_block_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
                                     index: int, lookback: int = 10) -> bool:
     """
     1. Propulsion Block: 
@@ -1181,6 +1187,7 @@ def detect_propulsion_block_bullish(open_prices: np.ndarray, close_prices: np.nd
     return False
 
 def detect_propulsion_block_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
                                     index: int, lookback: int = 10) -> bool:
     """Bearish Propulsion Block detection."""
     if index < 3: return False
@@ -1279,6 +1286,7 @@ def detect_balanced_price_range(open_prices: np.ndarray, close_prices: np.ndarra
     return False
 
 def detect_volume_imbalance_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
                                     index: int) -> bool:
     """
     4. Volume Imbalance (Bullish).
@@ -1302,6 +1310,17 @@ def detect_volume_imbalance_bullish(open_prices: np.ndarray, close_prices: np.nd
         # Strategy will handle the rest (e.g. Buy the gap fill).
         return True
         
+    return False
+
+def detect_volume_imbalance_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
+                                    index: int) -> bool:
+    """Bearish Volume Imbalance."""
+    if index < 1: return False
+    c1 = close_prices[index-1]
+    o2 = open_prices[index]
+    if abs(o2 - c1) > 0:
+        return True
     return False
 
 def detect_mean_threshold_retest_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
@@ -1447,6 +1466,7 @@ def detect_silver_bullet_bearish(open_prices: np.ndarray, close_prices: np.ndarr
     return False
 
 def detect_opening_gap_reclaim_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                       high_prices: np.ndarray, low_prices: np.ndarray,
                                        index: int) -> bool:
     """
     8. Opening Gap Reclaim (NDOG/NWOG).
@@ -1468,6 +1488,7 @@ def detect_opening_gap_reclaim_bullish(open_prices: np.ndarray, close_prices: np
     return was_below and is_above
 
 def detect_opening_gap_reclaim_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                       high_prices: np.ndarray, low_prices: np.ndarray,
                                        index: int) -> bool:
     """Bearish Opening Gap Reclaim."""
     if index < 10: return False
@@ -1682,7 +1703,7 @@ def detect_sponsor_candle_bearish(open_prices: np.ndarray, close_prices: np.ndar
                  
     return False
 
-def detect_range_rotation_bullish(close_prices: np.ndarray, 
+def detect_range_rotation_bullish(open_prices: np.ndarray, close_prices: np.ndarray, 
                                   high_prices: np.ndarray, low_prices: np.ndarray,
                                   index: int, lookback: int = 20) -> bool:
     """
@@ -1707,7 +1728,7 @@ def detect_range_rotation_bullish(close_prices: np.ndarray,
     
     return is_at_bottom and is_bullish
 
-def detect_range_rotation_bearish(close_prices: np.ndarray,
+def detect_range_rotation_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
                                   high_prices: np.ndarray, low_prices: np.ndarray,
                                   index: int, lookback: int = 20) -> bool:
     """Bearish Range Rotation (Top to Mean)."""
@@ -1724,7 +1745,9 @@ def detect_range_rotation_bearish(close_prices: np.ndarray,
     
     return is_at_top and is_bearish
 
-def detect_snap_back_bullish(close_prices: np.ndarray, index: int) -> bool:
+def detect_snap_back_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                            high_prices: np.ndarray, low_prices: np.ndarray,
+                            index: int) -> bool:
     """
     14. Snap Back (Mean Reversion - Bullish).
     Price extended far from EMA20, looking for snap back.
@@ -1742,7 +1765,9 @@ def detect_snap_back_bullish(close_prices: np.ndarray, index: int) -> bool:
     
     return extension and reversal
 
-def detect_snap_back_bearish(close_prices: np.ndarray, index: int) -> bool:
+def detect_snap_back_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                            high_prices: np.ndarray, low_prices: np.ndarray,
+                            index: int) -> bool:
     """Bearish Snap Back."""
     if index < 20: return False
     ema20 = np.mean(close_prices[index-20:index])
@@ -1750,7 +1775,8 @@ def detect_snap_back_bearish(close_prices: np.ndarray, index: int) -> bool:
     reversal = close_prices[index] < close_prices[index-1]
     return extension and reversal
 
-def detect_quarterly_shift_bullish(close_prices: np.ndarray, 
+def detect_quarterly_shift_bullish(open_prices: np.ndarray, close_prices: np.ndarray, 
+                                   high_prices: np.ndarray, low_prices: np.ndarray,
                                    index: int) -> bool:
     """
     15. Quarterly Shift (Bullish).
@@ -1766,7 +1792,9 @@ def detect_quarterly_shift_bullish(close_prices: np.ndarray,
     
     return is_new_quarter and is_up
 
-def detect_quarterly_shift_bearish(close_prices: np.ndarray, index: int) -> bool:
+def detect_quarterly_shift_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                   high_prices: np.ndarray, low_prices: np.ndarray,
+                                   index: int) -> bool:
     cycle_length = 24
     is_new_quarter = (index % cycle_length) == 0
     is_down = close_prices[index] < close_prices[index-1]
@@ -1835,6 +1863,7 @@ def detect_standard_deviation_projection_bearish(close_prices: np.ndarray,
     return False
 
 def detect_power_of_3_swing_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
                                     index: int) -> bool:
     """
     17. Power of 3 Swing (Weekly/Monthly style).
@@ -1859,6 +1888,7 @@ def detect_power_of_3_swing_bullish(open_prices: np.ndarray, close_prices: np.nd
     return False
 
 def detect_power_of_3_swing_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray,
                                     index: int) -> bool:
     """Bearish Po3 Swing."""
     if index < 30: return False
@@ -1871,7 +1901,8 @@ def detect_power_of_3_swing_bearish(open_prices: np.ndarray, close_prices: np.nd
             
     return False
 
-def detect_institutional_swing_point_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
+def detect_institutional_swing_point_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                             high_prices: np.ndarray, low_prices: np.ndarray,
                                              index: int) -> bool:
     """
     18. Institutional Swing Point (Bullish).
@@ -1894,7 +1925,8 @@ def detect_institutional_swing_point_bullish(high_prices: np.ndarray, low_prices
          
     return False
 
-def detect_institutional_swing_point_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
+def detect_institutional_swing_point_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                             high_prices: np.ndarray, low_prices: np.ndarray,
                                              index: int) -> bool:
     """Bearish Institutional Swing Point (Fractal High)."""
     if index < 2: return False
@@ -1908,7 +1940,8 @@ def detect_institutional_swing_point_bearish(high_prices: np.ndarray, low_prices
         
     return False
 
-def detect_smt_divergence_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
+def detect_smt_divergence_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                  high_prices: np.ndarray, low_prices: np.ndarray,
                                   index: int) -> bool:
     """
     19. SMT Divergence (Bullish).
@@ -1940,7 +1973,8 @@ def detect_smt_divergence_bullish(close_prices: np.ndarray, low_prices: np.ndarr
              
     return False
 
-def detect_smt_divergence_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
+def detect_smt_divergence_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                  high_prices: np.ndarray, low_prices: np.ndarray,
                                   index: int) -> bool:
     """Bearish SMT Divergence (Simulated)."""
     if index < 15: return False
@@ -1956,7 +1990,9 @@ def detect_smt_divergence_bearish(close_prices: np.ndarray, high_prices: np.ndar
             
     return False
 
-def detect_macro_macro_bullish(index: int) -> bool:
+def detect_macro_macro_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int) -> bool:
     """
     20. Macro Cycles (Bullish).
     Time-based algorithm macro. e.g. every 1 hour at :50 mark.
@@ -1971,7 +2007,9 @@ def detect_macro_macro_bullish(index: int) -> bool:
         return True
     return False
 
-def detect_macro_macro_bearish(index: int) -> bool:
+def detect_macro_macro_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int) -> bool:
     if (index % 60) >= 50 and (index % 60) <= 59:
         return True
     return False
@@ -1981,7 +2019,8 @@ def detect_macro_macro_bearish(index: int) -> bool:
 # MASS SMC EXPANSION - BATCH 5 (21-25/50)
 # ==============================================================================
 
-def detect_liquidity_run_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
+def detect_liquidity_run_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray,
                                  index: int) -> bool:
     """
     21. Liquidity Run (Bullish).
@@ -2008,7 +2047,8 @@ def detect_liquidity_run_bullish(high_prices: np.ndarray, low_prices: np.ndarray
     
     return is_run_down and is_reversal
 
-def detect_liquidity_run_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
+def detect_liquidity_run_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray,
                                  index: int) -> bool:
     """Bearish Liquidity Run (Run up on stops)."""
     if index < 4: return False
@@ -2099,7 +2139,7 @@ def detect_equilibrium_reclaimed_bearish(close_prices: np.ndarray,
     return was_above and is_below
 
 def detect_partial_void_fill_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
-                                     low_prices: np.ndarray,
+                                     high_prices: np.ndarray, low_prices: np.ndarray,
                                      index: int) -> bool:
     """
     24. Partial Void Fill (Bullish).
@@ -2178,7 +2218,7 @@ def detect_fractal_expansion_bearish(close_prices: np.ndarray,
 # MASS SMC EXPANSION - BATCH 6 (26-30/50)
 # ==============================================================================
 
-def detect_initial_balance_breakout_bullish(close_prices: np.ndarray, 
+def detect_initial_balance_breakout_bullish(open_prices: np.ndarray, close_prices: np.ndarray, 
                                             high_prices: np.ndarray, low_prices: np.ndarray,
                                             index: int) -> bool:
     """
@@ -2209,7 +2249,7 @@ def detect_initial_balance_breakout_bullish(close_prices: np.ndarray,
         return True
     return False
 
-def detect_initial_balance_breakout_bearish(close_prices: np.ndarray,
+def detect_initial_balance_breakout_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
                                             high_prices: np.ndarray, low_prices: np.ndarray,
                                             index: int) -> bool:
     """Bearish IB Breakout."""
@@ -2219,7 +2259,7 @@ def detect_initial_balance_breakout_bearish(close_prices: np.ndarray,
         return True
     return False
 
-def detect_opening_range_breakout_bullish(close_prices: np.ndarray,
+def detect_opening_range_breakout_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
                                           high_prices: np.ndarray, low_prices: np.ndarray,
                                           index: int) -> bool:
     """
@@ -2235,7 +2275,7 @@ def detect_opening_range_breakout_bullish(close_prices: np.ndarray,
         return True
     return False
 
-def detect_opening_range_breakout_bearish(close_prices: np.ndarray,
+def detect_opening_range_breakout_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
                                           high_prices: np.ndarray, low_prices: np.ndarray,
                                           index: int) -> bool:
     """Bearish ORB."""
@@ -2246,7 +2286,8 @@ def detect_opening_range_breakout_bearish(close_prices: np.ndarray,
     return False
 
 def detect_daily_open_rejection_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
-                                        low_prices: np.ndarray, index: int) -> bool:
+                                        high_prices: np.ndarray, low_prices: np.ndarray, 
+                                        index: int) -> bool:
     """
     28. Daily Open Rejection (Bullish).
     Price dips to the Daily Open price and rejects it (closes higher).
@@ -2271,7 +2312,8 @@ def detect_daily_open_rejection_bullish(open_prices: np.ndarray, close_prices: n
     return touched and closed_above and is_green
 
 def detect_daily_open_rejection_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
-                                        high_prices: np.ndarray, index: int) -> bool:
+                                        high_prices: np.ndarray, low_prices: np.ndarray, 
+                                        index: int) -> bool:
     """Bearish Daily Open Rejection."""
     if index < 50: return False
     daily_open = open_prices[index-50]
@@ -2281,7 +2323,9 @@ def detect_daily_open_rejection_bearish(open_prices: np.ndarray, close_prices: n
     is_red = close_prices[index] < open_prices[index]
     return touched and closed_below and is_red
 
-def detect_pwh_pwl_sweep_bullish(low_prices: np.ndarray, index: int) -> bool:
+def detect_pwh_pwl_sweep_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray, 
+                                 index: int) -> bool:
     """
     29. PWH/PWL Sweep (Bullish).
     Sweep of Previous Week Low.
@@ -2300,7 +2344,9 @@ def detect_pwh_pwl_sweep_bullish(low_prices: np.ndarray, index: int) -> bool:
          return True
     return False
 
-def detect_pwh_pwl_sweep_bearish(high_prices: np.ndarray, index: int) -> bool:
+def detect_pwh_pwl_sweep_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray, 
+                                 index: int) -> bool:
     """Bearish PWH Sweep."""
     if index < 200: return False
     pwh = np.max(high_prices[index-200:index-10])
@@ -2308,7 +2354,9 @@ def detect_pwh_pwl_sweep_bearish(high_prices: np.ndarray, index: int) -> bool:
         return True
     return False
 
-def detect_pdh_pdl_sweep_bullish(low_prices: np.ndarray, index: int) -> bool:
+def detect_pdh_pdl_sweep_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray, 
+                                 index: int) -> bool:
     """
     30. PDH/PDL Sweep (Bullish).
     Sweep of Previous Day Low.
@@ -2321,7 +2369,9 @@ def detect_pdh_pdl_sweep_bullish(low_prices: np.ndarray, index: int) -> bool:
         return True
     return False
 
-def detect_pdh_pdl_sweep_bearish(high_prices: np.ndarray, index: int) -> bool:
+def detect_pdh_pdl_sweep_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray, 
+                                 index: int) -> bool:
     """Bearish PDH Sweep."""
     if index < 75: return False
     pdh = np.max(high_prices[index-75:index-10])
@@ -2334,7 +2384,8 @@ def detect_pdh_pdl_sweep_bearish(high_prices: np.ndarray, index: int) -> bool:
 # MASS SMC EXPANSION - BATCH 7 (31-35/50)
 # ==============================================================================
 
-def detect_swing_failure_pattern_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
+def detect_swing_failure_pattern_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                         high_prices: np.ndarray, low_prices: np.ndarray,
                                          index: int) -> bool:
     """
     31. Swing Failure Pattern (SFP) (Bullish).
@@ -2359,7 +2410,8 @@ def detect_swing_failure_pattern_bullish(low_prices: np.ndarray, close_prices: n
                 
     return False
 
-def detect_swing_failure_pattern_bearish(high_prices: np.ndarray, close_prices: np.ndarray,
+def detect_swing_failure_pattern_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                         high_prices: np.ndarray, low_prices: np.ndarray,
                                          index: int) -> bool:
     """Bearish SFP."""
     if index < 10: return False
@@ -2411,7 +2463,8 @@ def detect_momentum_impulse_bearish(open_prices: np.ndarray, close_prices: np.nd
             return True
     return False
 
-def detect_psychological_level_rejection_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
+def detect_psychological_level_rejection_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                                 high_prices: np.ndarray, low_prices: np.ndarray,
                                                  index: int) -> bool:
     """
     33. Psychological Level Rejection (Bullish).
@@ -2436,7 +2489,8 @@ def detect_psychological_level_rejection_bullish(low_prices: np.ndarray, close_p
         return True
     return False
 
-def detect_psychological_level_rejection_bearish(high_prices: np.ndarray, close_prices: np.ndarray,
+def detect_psychological_level_rejection_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                                 high_prices: np.ndarray, low_prices: np.ndarray,
                                                  index: int) -> bool:
     """Bearish Psych Level Rejection."""
     nearest_50 = (int(close_prices[index]) // 50) * 50 + 50 # Ceiling
@@ -2444,7 +2498,9 @@ def detect_psychological_level_rejection_bearish(high_prices: np.ndarray, close_
         return True
     return False
 
-def detect_trendline_liquidity_build_bullish(low_prices: np.ndarray, index: int) -> bool:
+def detect_trendline_liquidity_build_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                            high_prices: np.ndarray, low_prices: np.ndarray,
+                                            index: int) -> bool:
     """
     34. Trendline Liquidity Build (Bullish Setup).
     Detects a smooth line of Higher Lows (Retail Trendline).
@@ -2474,7 +2530,9 @@ def detect_trendline_liquidity_build_bullish(low_prices: np.ndarray, index: int)
             
     return False
 
-def detect_trendline_liquidity_build_bearish(high_prices: np.ndarray, index: int) -> bool:
+def detect_trendline_liquidity_build_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                            high_prices: np.ndarray, low_prices: np.ndarray,
+                                            index: int) -> bool:
     """Bearish Trendline Liquidity (Retail Resistance)."""
     if index < 10: return False
     h1 = high_prices[index]
@@ -2573,7 +2631,8 @@ def detect_amd_setup_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
             
     return False
 
-def detect_turtle_soup_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
+def detect_turtle_soup_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
                                index: int) -> bool:
     """
     37. Turtle Soup (Bullish).
@@ -2596,7 +2655,8 @@ def detect_turtle_soup_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
             
     return False
 
-def detect_turtle_soup_bearish(high_prices: np.ndarray, close_prices: np.ndarray,
+def detect_turtle_soup_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
                                index: int) -> bool:
     """Bearish Turtle Soup."""
     if index < 25: return False
@@ -2944,7 +3004,8 @@ def detect_rejection_block_bearish(open_prices: np.ndarray, close_prices: np.nda
     return False
 
 def detect_nwog_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
-                        low_prices: np.ndarray, index: int) -> bool:
+                        high_prices: np.ndarray, low_prices: np.ndarray, 
+                        index: int) -> bool:
     """
     44. New Week Opening Gap (NWOG) (Bullish).
     Gap between Friday Close and Monday Open.
@@ -2983,7 +3044,8 @@ def detect_nwog_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
     return False
 
 def detect_nwog_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
-                        high_prices: np.ndarray, index: int) -> bool:
+                        high_prices: np.ndarray, low_prices: np.ndarray, 
+                        index: int) -> bool:
     """Bearish NWOG test."""
     # Same logic, just checking for bearish rejection of gap
     if index < 50: return False
@@ -3002,7 +3064,8 @@ def detect_nwog_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
     return False
 
 def detect_volume_void_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
-                               low_prices: np.ndarray, index: int) -> bool:
+                               high_prices: np.ndarray, low_prices: np.ndarray, 
+                               index: int) -> bool:
     """
     45. Volume Void / LVN (Bullish).
     Simulated by identifying a 'Candle with very large range but very small body?'.
@@ -3031,7 +3094,8 @@ def detect_volume_void_bullish(open_prices: np.ndarray, close_prices: np.ndarray
     return False
 
 def detect_volume_void_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
-                               high_prices: np.ndarray, index: int) -> bool:
+                               high_prices: np.ndarray, low_prices: np.ndarray, 
+                               index: int) -> bool:
     """Bearish Volume Void."""
     if index < 10: return False
     for i in range(1, 20):
@@ -3050,8 +3114,9 @@ def detect_volume_void_bearish(open_prices: np.ndarray, close_prices: np.ndarray
 # MASS SMC EXPANSION - BATCH 10 (46-50/50 - THE FINAL BATCH)
 # ==============================================================================
 
-def detect_dragon_pattern_bullish(close_prices: np.ndarray, 
-                                  low_prices: np.ndarray, index: int) -> bool:
+def detect_dragon_pattern_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                  high_prices: np.ndarray, low_prices: np.ndarray, 
+                                  index: int) -> bool:
     """
     46. Dragon Pattern (Bullish).
     Aggressive W-Bottom.
@@ -3114,8 +3179,9 @@ def detect_dragon_pattern_bullish(close_prices: np.ndarray,
              
     return False
 
-def detect_dragon_pattern_bearish(close_prices: np.ndarray,
-                                  high_prices: np.ndarray, index: int) -> bool:
+def detect_dragon_pattern_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                  high_prices: np.ndarray, low_prices: np.ndarray, 
+                                  index: int) -> bool:
     """Bearish Dragon (Inverse). M Pattern Breakout."""
     if index < 20: return False
     
@@ -3154,8 +3220,9 @@ def detect_dragon_pattern_bearish(close_prices: np.ndarray,
              return True
     return False
 
-def detect_quasimodo_pattern_bullish(low_prices: np.ndarray, high_prices: np.ndarray,
-                                     close_prices: np.ndarray, index: int) -> bool:
+def detect_quasimodo_pattern_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                     high_prices: np.ndarray, low_prices: np.ndarray, 
+                                     index: int) -> bool:
     """
     47. Quasimodo (QM) / Over-Under (Bullish).
     Sequence:
@@ -3208,8 +3275,9 @@ def detect_quasimodo_pattern_bullish(low_prices: np.ndarray, high_prices: np.nda
              
     return False
 
-def detect_quasimodo_pattern_bearish(low_prices: np.ndarray, high_prices: np.ndarray,
-                                     close_prices: np.ndarray, index: int) -> bool:
+def detect_quasimodo_pattern_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                     high_prices: np.ndarray, low_prices: np.ndarray, 
+                                     index: int) -> bool:
     """Bearish QM."""
     if index < 25: return False
     
@@ -3240,7 +3308,9 @@ def detect_quasimodo_pattern_bearish(low_prices: np.ndarray, high_prices: np.nda
              return True
     return False
 
-def detect_triple_tap_bullish(low_prices: np.ndarray, index: int) -> bool:
+def detect_triple_tap_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                             high_prices: np.ndarray, low_prices: np.ndarray, 
+                             index: int) -> bool:
     """
     48. Triple Tap / 3-Drive (Bullish).
     Three pushes down into a level.
@@ -3280,7 +3350,9 @@ def detect_triple_tap_bullish(low_prices: np.ndarray, index: int) -> bool:
             
     return False
 
-def detect_triple_tap_bearish(high_prices: np.ndarray, index: int) -> bool:
+def detect_triple_tap_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                             high_prices: np.ndarray, low_prices: np.ndarray, 
+                             index: int) -> bool:
     """Bearish Triple Tap (3 Highs)."""
     if index < 15: return False
     h3 = high_prices[index]
@@ -3302,7 +3374,8 @@ def detect_triple_tap_bearish(high_prices: np.ndarray, index: int) -> bool:
             return True
     return False
 
-def detect_compression_liquidity_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
+def detect_compression_liquidity_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                         high_prices: np.ndarray, low_prices: np.ndarray,
                                          index: int) -> bool:
     """
     49. Compression (CP) (Bullish Target?).
@@ -3339,7 +3412,8 @@ def detect_compression_liquidity_bullish(high_prices: np.ndarray, low_prices: np
         
     return False
 
-def detect_compression_liquidity_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
+def detect_compression_liquidity_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                         high_prices: np.ndarray, low_prices: np.ndarray,
                                          index: int) -> bool:
     """Bearish Compression (Rising Wedge)."""
     if index < 10: return False
@@ -3352,7 +3426,9 @@ def detect_compression_liquidity_bearish(high_prices: np.ndarray, low_prices: np
         return True
     return False
 
-def detect_master_pattern_bullish(close_prices: np.ndarray, index: int) -> bool:
+def detect_master_pattern_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                high_prices: np.ndarray, low_prices: np.ndarray, 
+                                index: int) -> bool:
     """
     50. The Master Pattern (Bullish).
     Contraction -> Expansion -> Trend.
@@ -3376,7 +3452,9 @@ def detect_master_pattern_bullish(close_prices: np.ndarray, index: int) -> bool:
             
     return False
 
-def detect_master_pattern_bearish(close_prices: np.ndarray, index: int) -> bool:
+def detect_master_pattern_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                high_prices: np.ndarray, low_prices: np.ndarray, 
+                                index: int) -> bool:
     """Bearish Master Pattern."""
     if index < 15: return False
     std_dev_old = np.std(close_prices[index-15:index-3])
@@ -3393,8 +3471,9 @@ def detect_master_pattern_bearish(close_prices: np.ndarray, index: int) -> bool:
 # BATCH 11 (51-55/75)
 # ==============================================================================
 
-def detect_inducement_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
-                              index: int) -> bool:
+def detect_inducement_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int) -> bool:
     """
     51. Inducement (IDM) (Bullish).
     A short-term Low that forms just above a POI (Point of Interest).
@@ -3429,8 +3508,9 @@ def detect_inducement_bullish(low_prices: np.ndarray, close_prices: np.ndarray,
                  
     return False
 
-def detect_inducement_bearish(high_prices: np.ndarray, close_prices: np.ndarray,
-                              index: int) -> bool:
+def detect_inducement_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int) -> bool:
     """Bearish Inducement (Trap High)."""
     if index < 10: return False
     idm_idx = -1
@@ -3567,7 +3647,8 @@ def detect_volume_imbalance_bearish(open_prices: np.ndarray, close_prices: np.nd
     return False
 
 def detect_judas_swing_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
-                               low_prices: np.ndarray, index: int) -> bool:
+                               high_prices: np.ndarray, low_prices: np.ndarray, 
+                               index: int) -> bool:
     """
     54. Judas Swing (Bullish).
     Aggressive fakeout at session open.
@@ -3597,7 +3678,8 @@ def detect_judas_swing_bullish(open_prices: np.ndarray, close_prices: np.ndarray
     return False
 
 def detect_judas_swing_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
-                               high_prices: np.ndarray, index: int) -> bool:
+                               high_prices: np.ndarray, low_prices: np.ndarray, 
+                               index: int) -> bool:
     """Bearish Judas."""
     if index < 15: return False
     vol_prev = np.std(close_prices[index-10:index-2])
@@ -3611,7 +3693,8 @@ def detect_judas_swing_bearish(open_prices: np.ndarray, close_prices: np.ndarray
     return False
 
 def detect_three_candle_reversal_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
-                                         low_prices: np.ndarray, index: int) -> bool:
+                                         high_prices: np.ndarray, low_prices: np.ndarray, 
+                                         index: int) -> bool:
     """
     55. Three Candle Reversal (3C) (Bullish).
     Pattern:
@@ -3643,7 +3726,8 @@ def detect_three_candle_reversal_bullish(open_prices: np.ndarray, close_prices: 
     return False
 
 def detect_three_candle_reversal_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
-                                         high_prices: np.ndarray, index: int) -> bool:
+                                         high_prices: np.ndarray, low_prices: np.ndarray, 
+                                         index: int) -> bool:
     """Bearish 3C Reversal."""
     if index < 2: return False
     c1 = index - 2
@@ -3666,8 +3750,9 @@ def detect_three_candle_reversal_bearish(open_prices: np.ndarray, close_prices: 
 # BATCH 12 (56-60/75)
 # ==============================================================================
 
-def detect_ote_entry_bullish(low_prices: np.ndarray, high_prices: np.ndarray,
-                             close_prices: np.ndarray, index: int) -> bool:
+def detect_ote_entry_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                             high_prices: np.ndarray, low_prices: np.ndarray, 
+                             index: int) -> bool:
     """
     56. Optimal Trade Entry (OTE) (Bullish).
     Price retraces into the 62% - 79% Fibonacci zone of a recent impulse leg.
@@ -3692,8 +3777,9 @@ def detect_ote_entry_bullish(low_prices: np.ndarray, high_prices: np.ndarray,
                 return True
     return False
 
-def detect_ote_entry_bearish(low_prices: np.ndarray, high_prices: np.ndarray,
-                             close_prices: np.ndarray, index: int) -> bool:
+def detect_ote_entry_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                             high_prices: np.ndarray, low_prices: np.ndarray, 
+                             index: int) -> bool:
     """Bearish OTE."""
     if index < 20: return False
     sw_high = np.max(high_prices[index-20:index-5])
@@ -3709,7 +3795,8 @@ def detect_ote_entry_bearish(low_prices: np.ndarray, high_prices: np.ndarray,
                 return True
     return False
 
-def detect_defining_range_bullish(high_prices: np.ndarray, close_prices: np.ndarray,
+def detect_defining_range_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray,
                                  index: int) -> bool:
     """
     57. Defining Range (DR) (Bullish).
@@ -3726,7 +3813,8 @@ def detect_defining_range_bullish(high_prices: np.ndarray, close_prices: np.ndar
             return True
     return False
 
-def detect_defining_range_bearish(low_prices: np.ndarray, close_prices: np.ndarray,
+def detect_defining_range_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray,
                                  index: int) -> bool:
     """Bearish DR."""
     if index < 70: return False
@@ -3736,8 +3824,9 @@ def detect_defining_range_bearish(low_prices: np.ndarray, close_prices: np.ndarr
             return True
     return False
 
-def detect_cpr_range_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
-                             close_prices: np.ndarray, index: int) -> bool:
+def detect_cpr_range_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                             high_prices: np.ndarray, low_prices: np.ndarray,
+                             index: int) -> bool:
     """
     58. Central Pivot Range (CPR) (Bullish).
     Pivot = (H + L + C) / 3
@@ -3766,8 +3855,9 @@ def detect_cpr_range_bullish(high_prices: np.ndarray, low_prices: np.ndarray,
             return True
     return False
 
-def detect_cpr_range_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
-                             close_prices: np.ndarray, index: int) -> bool:
+def detect_cpr_range_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                             high_prices: np.ndarray, low_prices: np.ndarray,
+                             index: int) -> bool:
     """Bearish CPR Rejection."""
     if index < 60: return False
     h_prev = np.max(high_prices[index-60:index-10])
@@ -3786,8 +3876,9 @@ def detect_cpr_range_bearish(high_prices: np.ndarray, low_prices: np.ndarray,
             return True
     return False
 
-def detect_value_area_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
-                              index: int) -> bool:
+def detect_value_area_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int) -> bool:
     """
     59. Value Area (VA) (Bullish).
     Value Area Low (VAL) approximation using 70% of standard deviation of price.
@@ -3804,8 +3895,9 @@ def detect_value_area_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
         return True
     return False
 
-def detect_value_area_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
-                              index: int) -> bool:
+def detect_value_area_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                               high_prices: np.ndarray, low_prices: np.ndarray,
+                               index: int) -> bool:
     """Bearish VA (VAH rejection)."""
     if index < 50: return False
     window = close_prices[index-50:index]
@@ -3818,8 +3910,9 @@ def detect_value_area_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
         return True
     return False
 
-def detect_poc_level_rejection_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
-                                       index: int) -> bool:
+def detect_poc_level_rejection_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                        high_prices: np.ndarray, low_prices: np.ndarray,
+                                        index: int) -> bool:
     """
     60. Point of Control (POC) (Bullish).
     POC is the price level with the highest frequency in the lookback window.
@@ -3837,8 +3930,9 @@ def detect_poc_level_rejection_bullish(close_prices: np.ndarray, low_prices: np.
             return True
     return False
 
-def detect_poc_level_rejection_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
-                                       index: int) -> bool:
+def detect_poc_level_rejection_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                        high_prices: np.ndarray, low_prices: np.ndarray,
+                                        index: int) -> bool:
     """Bearish POC rejection."""
     if index < 100: return False
     window = close_prices[index-100:index]
@@ -3856,45 +3950,16 @@ def detect_poc_level_rejection_bearish(close_prices: np.ndarray, high_prices: np
 # BATCH 13 (61-65/75)
 # ==============================================================================
 
-def detect_poor_high_low_bullish(high_prices: np.ndarray, close_prices: np.ndarray,
-                                index: int) -> bool:
-    """
-    61. Poor High (Bearish Target/Indicator). 
-    A High with almost no upper wick. Suggests unfinished auction.
-    Market usually revisits these to create a 'Proper' tail.
-    Logic: High is a local peak, but Wick is < 5% of body.
-    """
+def detect_poor_high_low_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray,
+                                 index: int) -> bool:
+    """Poor High (Bearish Target). Unfinished auction above."""
     if index < 5: return False
-    
-    # Check if index is a local high
-    if high_prices[index] >= np.max(high_prices[index-3:index]):
-        body_high = max(close_prices[index], close_prices[index-1]) # Simplified
-        actual_body_high = max(close_prices[index], 0) # Placeholder logic fix
-        
-        # Proper body high of current candle
-        # Let's use open/close of current candle
-        # Wait, I don't have open_prices here, let me check the signature of previous ones.
-        # Most previous ones used (open, close, high, low). 
-        # I should use the same to be safe.
-        pass
-
-    return False
-
-# Re-defining signatures to match the standard used in the file
-def detect_poor_high_low_bullish_v2(open_prices: np.ndarray, close_prices: np.ndarray,
-                                    high_prices: np.ndarray, low_prices: np.ndarray,
-                                    index: int) -> bool:
-    """Poor High (Bearish Target). Note: The user requested 'Bullish' in my internal plan, 
-    but Poor High is a target for UP move (unfinished), so it's a 'Bullish Target'.
-    Let's name it based on the Bias it supports."""
-    if index < 5: return False
-    
     # Is it a local high?
     if high_prices[index] >= np.max(high_prices[index-5:index]):
         body_high = max(open_prices[index], close_prices[index])
         wick_size = high_prices[index] - body_high
         body_size = abs(close_prices[index] - open_prices[index])
-        
         if body_size > 0 and (wick_size / body_size) < 0.05:
             return True
     return False
@@ -3904,12 +3969,10 @@ def detect_poor_high_low_bearish(open_prices: np.ndarray, close_prices: np.ndarr
                                  index: int) -> bool:
     """Poor Low (Bullish Target). Unfinished auction below."""
     if index < 5: return False
-    
     if low_prices[index] <= np.min(low_prices[index-5:index]):
         body_low = min(open_prices[index], close_prices[index])
         wick_size = body_low - low_prices[index]
         body_size = abs(close_prices[index] - open_prices[index])
-        
         if body_size > 0 and (wick_size / body_size) < 0.05:
             return True
     return False
@@ -4001,7 +4064,8 @@ def detect_tails_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
             return True
     return False
 
-def detect_composite_operator_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
+def detect_composite_operator_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                      high_prices: np.ndarray, low_prices: np.ndarray,
                                       index: int) -> bool:
     """
     64. Composite Operator (Bullish Footprint).
@@ -4024,7 +4088,8 @@ def detect_composite_operator_bullish(close_prices: np.ndarray, low_prices: np.n
             return True
     return False
 
-def detect_composite_operator_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
+def detect_composite_operator_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                      high_prices: np.ndarray, low_prices: np.ndarray,
                                       index: int) -> bool:
     """Composite Operator (Bearish Footprint)."""
     if index < 10: return False
@@ -4038,7 +4103,8 @@ def detect_composite_operator_bearish(close_prices: np.ndarray, high_prices: np.
             return True
     return False
 
-def detect_dist_accum_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
+def detect_dist_accum_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                              high_prices: np.ndarray, low_prices: np.ndarray,
                               index: int) -> bool:
     """
     65. Accumulation Phase Proxy (Bullish).
@@ -4060,7 +4126,8 @@ def detect_dist_accum_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
                  
     return False
 
-def detect_dist_accum_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
+def detect_dist_accum_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                              high_prices: np.ndarray, low_prices: np.ndarray,
                               index: int) -> bool:
     """Distribution Phase Proxy (Bearish)."""
     if index < 30: return False
@@ -4079,8 +4146,9 @@ def detect_dist_accum_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
 # BATCH 14 (66-70/75)
 # ==============================================================================
 
-def detect_wyckoff_spring_bullish(close_prices: np.ndarray, high_prices: np.ndarray,
-                                 low_prices: np.ndarray, index: int) -> bool:
+def detect_wyckoff_spring_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray, 
+                                 index: int) -> bool:
     """
     66. Wyckoff Spring (Bullish).
     A terminal shakeout below a trading range before a markup phase.
@@ -4103,8 +4171,9 @@ def detect_wyckoff_spring_bullish(close_prices: np.ndarray, high_prices: np.ndar
                 return True
     return False
 
-def detect_wyckoff_upthrust_bearish(close_prices: np.ndarray, high_prices: np.ndarray,
-                                    low_prices: np.ndarray, index: int) -> bool:
+def detect_wyckoff_upthrust_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                    high_prices: np.ndarray, low_prices: np.ndarray, 
+                                    index: int) -> bool:
     """Wyckoff Upthrust (Bearish Spring)."""
     if index < 20: return False
     range_high = np.max(high_prices[index-20:index-5])
@@ -4145,8 +4214,9 @@ def detect_wyckoff_sow_bearish(open_prices: np.ndarray, close_prices: np.ndarray
         return True
     return False
 
-def detect_wyckoff_lps_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
-                               high_prices: np.ndarray, index: int) -> bool:
+def detect_wyckoff_lps_bullish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                high_prices: np.ndarray, low_prices: np.ndarray, 
+                                index: int) -> bool:
     """
     68. Last Point of Support (LPS) (Bullish).
     A shallow pullback after a Sign of Strength (SOS).
@@ -4167,8 +4237,9 @@ def detect_wyckoff_lps_bullish(close_prices: np.ndarray, low_prices: np.ndarray,
                 return True
     return False
 
-def detect_wyckoff_lpsy_bearish(close_prices: np.ndarray, low_prices: np.ndarray,
-                                high_prices: np.ndarray, index: int) -> bool:
+def detect_wyckoff_lpsy_bearish(open_prices: np.ndarray, close_prices: np.ndarray,
+                                 high_prices: np.ndarray, low_prices: np.ndarray, 
+                                 index: int) -> bool:
     """Last Point of Supply (LPSY) (Bearish LPS)."""
     if index < 15: return False
     breakout_low = np.min(low_prices[index-15:index-5])

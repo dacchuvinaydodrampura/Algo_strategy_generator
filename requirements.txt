@@ -6,4 +6,4 @@ flask>=3.0.0
 gunicorn>=21.2.0
 fyers-apiv3>=3.0.0
 fpdf>=1.7.2
-google-generativeai>=0.3.0
+google-generativeai>=0.8.0
