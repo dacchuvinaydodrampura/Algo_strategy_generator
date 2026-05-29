@@ -1,0 +1,16 @@
+# Caches
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Local environments and secrets
+.env
+.env.local
+
+# Data storage (local tick database, downloaded archives, reports)
+data/
+market_research/data/
+
+# IDE files
+.vscode/
+.idea/

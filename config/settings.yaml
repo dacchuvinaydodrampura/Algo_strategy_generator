@@ -1,0 +1,62 @@
+telegram:
+  poll_interval_seconds: 10
+  download_timeout_seconds: 300
+  # Channel ID is read from env: TELEGRAM_CHANNEL_ID
+  # Bot token is read from env: TELEGRAM_BOT_TOKEN
+
+storage:
+  archives_dir: "data/archives"
+  ticks_dir: "data/ticks"
+  reports_dir: "data/reports"
+  patterns_dir: "data/patterns"
+  temp_dir: "data/temp"
+  db_path: "data/research.duckdb"
+
+ingestion:
+  chunk_size_ticks: 5000
+  max_gap_seconds: 300        # gaps > 5 min are flagged
+  min_ticks_per_symbol: 100   # reject symbols with fewer ticks
+  timestamp_field: "t"
+  sequence_field: "seq"
+
+features:
+  imbalance_depth_levels: 5    # how many book levels for imbalance
+  microprice_levels: 2         # levels used for microprice
+  slope_window_ticks: 10       # ticks for microprice slope
+  volatility_window_ticks: 20  # ticks for realised vol
+  aggression_window_ticks: 15  # ticks for aggression score
+  liquidity_window_ticks: 10
+
+windows:
+  tick_sizes: [20, 50, 100]    # fixed tick window sizes
+  time_sizes_seconds: [30, 60, 120]
+  min_window_ticks: 10
+
+patterns:
+  min_samples: 30
+  min_win_rate: 0.52
+  min_profit_factor: 1.25
+  max_features_per_rule: 4
+  clustering_n_clusters: 8
+  stability_cv_threshold: 0.35  # reject if CV of win-rate > 35%
+  oos_split_fraction: 0.3       # last 30% of day is OOS
+
+backtest:
+  tick_size: 0.05               # minimum price increment
+  lot_size: 25                  # contract lot size (e.g. NIFTY)
+  brokerage_per_lot: 20.0       # rupees per lot round trip
+  slippage_ticks: 1             # half-spread slippage on entry
+  latency_ms: 50                # assumed signal-to-fill latency
+  default_stop_ticks: 5
+  default_target_ticks: 10
+  max_hold_seconds: 120
+  initial_capital: 1_000_000.0
+  use_dynamic_stops: true       # set to true to calculate stop/target based on realized volatility
+  stop_vol_multiplier: 3.0      # multiplier of realized volatility for dynamic stop loss
+  target_vol_multiplier: 6.0    # multiplier of realized volatility for dynamic profit target
+
+report:
+  pdf_page_size: "A4"
+  logo_path: null               # optional: path to logo image
+  max_example_windows: 5        # how many matched examples to embed
+  author: "Market Research Engine v1.0"
