@@ -79,6 +79,15 @@ def populate_metrics(
     result.win_rate_cv = _stability_cv(is_trades, result.direction)
     result.is_stable = result.win_rate_cv <= patterns_cfg.stability_cv_threshold
 
+    # Determine dynamic lot size based on symbol
+    sym_upper = result.symbol.upper()
+    if "BANKNIFTY" in sym_upper:
+        lot_size = 30
+    elif "NIFTY" in sym_upper:
+        lot_size = 65
+    else:
+        lot_size = bt_cfg.lot_size
+
     # ── Advanced Statistical Validation Checks ──────────────────────────────
     # Monte Carlo simulation
     result.mc_pass = run_monte_carlo_test(
@@ -90,7 +99,7 @@ def populate_metrics(
     result.sensitivity_pass = run_sensitivity_test(
         trades=is_trades,
         tick_size=bt_cfg.tick_size,
-        lot_size=bt_cfg.lot_size,
+        lot_size=lot_size,
     )
     # Multi-day cross stability (assesses inter-day consistency on all trades)
     result.multi_day_pass = run_multi_day_test(

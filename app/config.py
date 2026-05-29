@@ -96,7 +96,7 @@ class BacktestConfig(BaseModel):
     lot_size: int = 25
     brokerage_per_lot: float = 20.0
     slippage_ticks: int = 1
-    latency_ms: int = 50
+    latency_ms: int = 0
     default_stop_ticks: int = 5
     default_target_ticks: int = 10
     max_hold_seconds: int = 120

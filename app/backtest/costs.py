@@ -67,10 +67,11 @@ class CostModel:
     def assumption_text(self) -> list[str]:
         """Return human-readable cost assumption strings for the PDF report."""
         cfg = self._cfg
+        latency_str = f"{cfg.latency_ms} ms signal-to-fill delay (entry tick skipped)" if cfg.latency_ms > 0 else "0 ms latency (no entry tick skipped)"
         return [
             f"Brokerage: ₹{cfg.brokerage_per_lot:.2f} per lot (round trip)",
             f"Slippage: {cfg.slippage_ticks} tick(s) × ₹{cfg.tick_size:.2f} × lot size",
-            f"Latency: {cfg.latency_ms} ms signal-to-fill delay (entry tick skipped)",
+            f"Latency: {latency_str}",
             f"Tick size: ₹{cfg.tick_size:.2f}",
             f"Lot size: {cfg.lot_size} units",
             "Exit fills: at exact target/stop price (no exit slippage assumed)",

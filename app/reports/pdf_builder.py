@@ -1206,13 +1206,20 @@ class PDFBuilder:
         items.extend(_section_header("11. Backtest Assumptions", st))
         cost_model = CostModel(cfg)
         
+        sym_upper = result.symbol.upper()
+        if "BANKNIFTY" in sym_upper:
+            lot_size_str = "30 shares"
+        elif "NIFTY" in sym_upper:
+            lot_size_str = "65 shares"
+        else:
+            lot_size_str = f"{cfg.lot_size} units"
+
         ass_data = [
             ["Assumption", "Value", "Justification"],
             ["Tick size", f"INR {cfg.tick_size:.2f}", "Exchange minimum increment"],
-            ["Lot size", f"{cfg.lot_size} units", "Contract lot specification"],
+            ["Lot size", lot_size_str, "Contract lot specification"],
             ["Brokerage fee", f"INR {cfg.brokerage_per_lot:.2f} / lot", "Standard discount brokerage fee"],
             ["Entry slippage", f"{cfg.slippage_ticks} ticks", "Market impact allowance"],
-            ["Execution Latency", f"{cfg.latency_ms} ms", "DMA processing/routing delay buffer"],
         ]
         ass_tbl = Table(ass_data, colWidths=[5.0*cm, 4.5*cm, 6.4*cm])
         ass_tbl.setStyle(_tblstyle())

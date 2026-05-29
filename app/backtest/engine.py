@@ -162,6 +162,15 @@ class BacktestEngine:
         cfg = self._cfg
         tick_size = cfg.tick_size
 
+        # Determine dynamic lot size based on symbol
+        sym_upper = window.symbol.upper()
+        if "BANKNIFTY" in sym_upper:
+            lot_size = 30
+        elif "NIFTY" in sym_upper:
+            lot_size = 65
+        else:
+            lot_size = cfg.lot_size
+
         # Session boundaries check
         session_start_t = int(features_df["t"].iloc[0])
         session_end_t = int(features_df["t"].iloc[-1])
@@ -256,7 +265,7 @@ class BacktestEngine:
                 return None  # entry unfilled, skip trade
 
         else:  # market order: sweeps order book levels instantly
-            entry_price = _simulate_sweep_fill(entry_row, direction, cfg.lot_size, tick_size, is_exit=False)
+            entry_price = _simulate_sweep_fill(entry_row, direction, lot_size, tick_size, is_exit=False)
             entry_price = entry_price + (cfg.slippage_ticks * tick_size if direction == PatternDirection.LONG else -cfg.slippage_ticks * tick_size)
             entry_t = entry_t_start
 
@@ -286,13 +295,13 @@ class BacktestEngine:
             if direction == PatternDirection.LONG:
                 check_price = bid  # conservative exit bid
                 if check_price >= target_price:
-                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = _simulate_sweep_fill(row, direction, lot_size, tick_size, is_exit=True)
                     exit_price = max(target_price, exit_price)
                     exit_t = t
                     exit_reason = "TARGET"
                     break
                 if check_price <= stop_price:
-                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = _simulate_sweep_fill(row, direction, lot_size, tick_size, is_exit=True)
                     exit_price = min(stop_price, exit_price)
                     exit_t = t
                     exit_reason = "STOP"
@@ -300,31 +309,31 @@ class BacktestEngine:
             else:
                 check_price = ask
                 if check_price <= target_price:
-                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = _simulate_sweep_fill(row, direction, lot_size, tick_size, is_exit=True)
                     exit_price = min(target_price, exit_price)
                     exit_t = t
                     exit_reason = "TARGET"
                     break
                 if check_price >= stop_price:
-                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = _simulate_sweep_fill(row, direction, lot_size, tick_size, is_exit=True)
                     exit_price = max(stop_price, exit_price)
                     exit_t = t
                     exit_reason = "STOP"
                     break
 
             if t >= max_exit_t:
-                exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                exit_price = _simulate_sweep_fill(row, direction, lot_size, tick_size, is_exit=True)
                 exit_t = t
                 exit_reason = "TIMEOUT"
                 break
 
         # Compute PnL
         if direction == PatternDirection.LONG:
-            gross_pnl = (exit_price - entry_price) * cfg.lot_size
+            gross_pnl = (exit_price - entry_price) * lot_size
         else:
-            gross_pnl = (entry_price - exit_price) * cfg.lot_size
+            gross_pnl = (entry_price - exit_price) * lot_size
 
-        cost = self._costs.total_cost(cfg.lot_size)
+        cost = self._costs.total_cost(lot_size)
         net_pnl = gross_pnl - cost
         hold_seconds = (exit_t - entry_t) / 1000.0
 

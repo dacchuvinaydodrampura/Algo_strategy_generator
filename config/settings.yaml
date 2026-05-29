@@ -46,7 +46,7 @@ backtest:
   lot_size: 25                  # contract lot size (e.g. NIFTY)
   brokerage_per_lot: 20.0       # rupees per lot round trip
   slippage_ticks: 1             # half-spread slippage on entry
-  latency_ms: 50                # assumed signal-to-fill latency
+  latency_ms: 0                 # assumed signal-to-fill latency
   default_stop_ticks: 5
   default_target_ticks: 10
   max_hold_seconds: 120
