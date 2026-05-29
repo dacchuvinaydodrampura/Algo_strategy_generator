@@ -350,6 +350,15 @@ def get_db_stats():
     except Exception as e:
         return {"db_exists": True, "db_type": "DuckDB", "size_bytes": db_path.stat().st_size, "error": str(e)}
 
+@app.get("/health")
+@app.head("/health")
+def health_check():
+    return {"status": "healthy"}
+
+@app.head("/")
+def dashboard_head():
+    return HTMLResponse(content="")
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
     html_content = r"""<!DOCTYPE html>
