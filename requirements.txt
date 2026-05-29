@@ -46,3 +46,5 @@ dnspython==2.6.1
 # Production web servers
 uvicorn==0.30.1
 gunicorn==22.0.0
+fastapi==0.111.0
+python-multipart==0.0.9
