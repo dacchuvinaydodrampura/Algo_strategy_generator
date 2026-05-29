@@ -1,5 +1,5 @@
 telegram:
-  poll_interval_seconds: 10
+  poll_interval_seconds: 3600
   download_timeout_seconds: 300
   # Channel ID is read from env: TELEGRAM_CHANNEL_ID
   # Bot token is read from env: TELEGRAM_BOT_TOKEN
