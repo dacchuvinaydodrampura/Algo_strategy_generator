@@ -32,6 +32,7 @@ async def telegram_polling_loop():
     while True:
         try:
             settings = load_settings()
+            settings.ensure_directories()
             # Only poll if the pipeline is idle to avoid concurrent run conflicts
             if pipeline_status["status"] != "running" and settings.telegram_bot_token and settings.telegram_channel_id:
                 from app.telegram_io.listener import TelegramListener
