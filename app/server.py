@@ -27,12 +27,43 @@ pipeline_status = {
     "log_output": []
 }
 
+_lock_file_fd = None
+
+def acquire_watcher_lock(lock_path: Path) -> bool:
+    global _lock_file_fd
+    try:
+        _lock_file_fd = open(lock_path, "w")
+        if os.name == "nt":
+            import msvcrt
+            try:
+                msvcrt.locking(_lock_file_fd.fileno(), msvcrt.LK_NBLCK, 1)
+                return True
+            except (IOError, OSError):
+                return False
+        else:
+            import fcntl
+            try:
+                fcntl.flock(_lock_file_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return True
+            except (IOError, OSError):
+                return False
+    except Exception:
+        return False
+
 async def telegram_polling_loop():
     logger.info("Starting integrated Telegram watch background task...")
     while True:
         try:
             settings = load_settings()
             settings.ensure_directories()
+            
+            # Acquire lock to ensure only one Gunicorn worker runs the polling loop
+            lock_path = settings.temp_path / "watcher.lock"
+            if not acquire_watcher_lock(lock_path):
+                logger.debug("Another worker holds the watcher lock. Sleeping.")
+                await asyncio.sleep(30)
+                continue
+                
             # Only poll if the pipeline is idle to avoid concurrent run conflicts
             if pipeline_status["status"] != "running" and settings.telegram_bot_token and settings.telegram_channel_id:
                 from app.telegram_io.listener import TelegramListener
