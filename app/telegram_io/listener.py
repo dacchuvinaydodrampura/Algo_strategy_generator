@@ -55,6 +55,24 @@ class TelegramListener:
     # ──────────────────────────────────────────────────────────────────────────
 
     def _load_state(self) -> int:
+        if self._settings.mongodb_uri:
+            try:
+                import pymongo
+                client = pymongo.MongoClient(self._settings.mongodb_uri)
+                try:
+                    db = client.get_default_database()
+                    if db is None or db.name == "test":
+                        db = client["market_research"]
+                except Exception:
+                    db = client["market_research"]
+                doc = db["system_state"].find_one({"key": "telegram_last_update_id"})
+                client.close()
+                if doc:
+                    logger.info("loaded_telegram_state_from_mongodb", last_update_id=doc.get("value"))
+                    return int(doc.get("value", 0))
+            except Exception as e:
+                logger.error("failed_to_load_telegram_state_from_mongodb", error=str(e))
+
         if self._state_path.exists():
             try:
                 data = json.loads(self._state_path.read_text())
@@ -64,6 +82,31 @@ class TelegramListener:
         return 0
 
     def _save_state(self) -> None:
+        if self._settings.mongodb_uri:
+            try:
+                import pymongo
+                import datetime
+                client = pymongo.MongoClient(self._settings.mongodb_uri)
+                try:
+                    db = client.get_default_database()
+                    if db is None or db.name == "test":
+                        db = client["market_research"]
+                except Exception:
+                    db = client["market_research"]
+                db["system_state"].replace_one(
+                    {"key": "telegram_last_update_id"},
+                    {
+                        "key": "telegram_last_update_id",
+                        "value": self._last_update_id,
+                        "updated_at": datetime.datetime.utcnow()
+                    },
+                    upsert=True
+                )
+                client.close()
+                logger.info("saved_telegram_state_to_mongodb", last_update_id=self._last_update_id)
+            except Exception as e:
+                logger.error("failed_to_save_telegram_state_to_mongodb", error=str(e))
+
         self._state_path.write_text(
             json.dumps({"last_update_id": self._last_update_id})
         )

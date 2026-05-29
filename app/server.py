@@ -27,6 +27,42 @@ pipeline_status = {
     "log_output": []
 }
 
+async def telegram_polling_loop():
+    logger.info("Starting integrated Telegram watch background task...")
+    while True:
+        try:
+            settings = load_settings()
+            # Only poll if the pipeline is idle to avoid concurrent run conflicts
+            if pipeline_status["status"] != "running" and settings.telegram_bot_token and settings.telegram_channel_id:
+                from app.telegram_io.listener import TelegramListener
+                listener = TelegramListener(settings)
+                
+                # Check Telegram for a new archive in a worker thread
+                archive_path = await asyncio.to_thread(
+                    listener.poll_for_archive_sync, settings.archives_path
+                )
+                
+                if archive_path:
+                    logger.info(f"Telegram listener found new archive: {archive_path.name}")
+                    # Run the pipeline in a worker thread so it updates pipeline_status on the dashboard
+                    await asyncio.to_thread(execute_pipeline, archive_path.name)
+            elif pipeline_status["status"] == "running":
+                logger.debug("Pipeline is busy, skipping Telegram poll.")
+        except Exception as e:
+            logger.error(f"Error in telegram_polling_loop: {e}")
+        
+        # Sleep for the configured interval (default 10s)
+        try:
+            settings = load_settings()
+            interval = settings.telegram.poll_interval_seconds
+        except Exception:
+            interval = 10
+        await asyncio.sleep(interval)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(telegram_polling_loop())
+
 class ConfigUpdate(BaseModel):
     telegram_bot_token: str
     telegram_channel_id: int
