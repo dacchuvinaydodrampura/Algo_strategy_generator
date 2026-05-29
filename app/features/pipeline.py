@@ -128,6 +128,14 @@ class FeaturePipeline:
             maxlen=cfg.liquidity_window_ticks
         )
 
+        # New deques for advanced features
+        self._spread_window: Deque[float] = deque(maxlen=50)
+        self._rolling_depths: Deque[float] = deque(maxlen=100)
+        self._bq_window: Deque[float] = deque(maxlen=50)
+        self._aq_window: Deque[float] = deque(maxlen=50)
+        self._vol_short_window: Deque[float] = deque(maxlen=15)
+        self._vol_long_window: Deque[float] = deque(maxlen=60)
+
         # For EWMA aggression
         self._ewma_aggression: float = 0.0
         self._ewma_alpha: float = 2.0 / (cfg.aggression_window_ticks + 1)
@@ -137,8 +145,19 @@ class FeaturePipeline:
         self._depth_p25: float = 0.0
         self._ticks_processed: int = 0
 
-        # Previous microprice (for vol computation)
+        # Previous values for deltas
         self._prev_microprice: Optional[float] = None
+        self._prev_imbalance: float = 0.0
+        self._prev_microprice_slope: float = 0.0
+        self._prev_bid: float = 0.0
+        self._prev_ask: float = 0.0
+        self._prev_bq: float = 0.0
+        self._prev_aq: float = 0.0
+
+        # EWMA states for volume deltas
+        self._ewma_aggressive_burst: float = 0.0
+        self._ewma_of_persistence: float = 0.0
+        self._trade_alpha: float = 0.1
 
     def process(self, tick: TickRecord) -> FeatureRecord:
         """
@@ -153,18 +172,24 @@ class FeaturePipeline:
         total_ask = tick.total_ask_depth()
         total_depth = total_bid + total_ask
         midprice = tick.midprice
+        spread = tick.spread
+        db = tick.db or 0.0
+        da = tick.da or 0.0
+        bq = tick.bq
+        aq = tick.aq
 
         # ── Update windows ────────────────────────────────────────────────────
         self._microprice_window.append(microprice)
 
+        mp_change = 0.0
         if self._prev_microprice is not None:
             mp_change = microprice - self._prev_microprice
             self._vol_window.append(mp_change)
+            self._vol_short_window.append(mp_change)
+            self._vol_long_window.append(mp_change)
         self._prev_microprice = microprice
 
         # Aggression: (db - da) / (|db| + |da| + eps)
-        db = tick.db or 0.0
-        da = tick.da or 0.0
         raw_aggression = (db - da) / (abs(db) + abs(da) + _EPS)
         self._ewma_aggression = (
             self._ewma_alpha * raw_aggression
@@ -173,6 +198,10 @@ class FeaturePipeline:
 
         self._depth_window.append(total_depth)
         self._all_depths.append(total_depth)
+        self._spread_window.append(spread)
+        self._rolling_depths.append(total_depth)
+        self._bq_window.append(bq)
+        self._aq_window.append(aq)
 
         # Update depth percentile every 100 ticks (expensive if done each tick)
         if self._ticks_processed % 100 == 0 and self._all_depths:
@@ -180,11 +209,73 @@ class FeaturePipeline:
 
         # ── Derived features ──────────────────────────────────────────────────
         microprice_slope = _slope(list(self._microprice_window))
-        relative_spread = tick.spread / (midprice + _EPS)
+        relative_spread = spread / (midprice + _EPS)
         depth_ratio = total_bid / (total_depth + _EPS)
         realised_vol = float(np.std(self._vol_window)) if len(self._vol_window) > 1 else 0.0
         liquidity_thin = 1.0 if (self._depth_p25 > 0 and total_depth < self._depth_p25) else 0.0
         momentum = math.copysign(microprice_slope ** 2, microprice_slope)
+
+        # Advanced features
+        # 1. Multi-level imbalance
+        imbalance_5 = (total_bid - total_ask) / (total_bid + total_ask + _EPS)
+
+        # 2. Imbalance velocity
+        imbalance_vel = tick.imbalance - self._prev_imbalance
+        self._prev_imbalance = tick.imbalance
+
+        # 3. Microprice acceleration
+        microprice_acc = microprice_slope - self._prev_microprice_slope
+        self._prev_microprice_slope = microprice_slope
+
+        # 4. Spread regime
+        rolling_median_spread = float(np.median(self._spread_window)) if self._spread_window else spread
+        spread_ratio = spread / (rolling_median_spread + _EPS)
+
+        # 5. Liquidity vacuum
+        rolling_mean_depth = float(np.mean(self._rolling_depths)) if self._rolling_depths else total_depth
+        liquidity_vacuum = 1.0 if total_depth < 0.5 * rolling_mean_depth else 0.0
+
+        # 6. Queue depletion
+        p10_bq = float(np.percentile(self._bq_window, 10)) if len(self._bq_window) >= 10 else 0.0
+        p10_aq = float(np.percentile(self._aq_window, 10)) if len(self._aq_window) >= 10 else 0.0
+        queue_depletion = 1.0 if (bq <= p10_bq or aq <= p10_aq) else 0.0
+
+        # 7. Replenishment detection
+        replenished = 0.0
+        if self._ticks_processed > 1:
+            if tick.bid == self._prev_bid and bq > self._prev_bq * 1.5:
+                replenished = 1.0
+            elif tick.ask == self._prev_ask and aq > self._prev_aq * 1.5:
+                replenished = 1.0
+        replenishment = replenished
+
+        # 8. Iceberg behavior
+        iceberg = 0.0
+        if self._ticks_processed > 1:
+            if db < 0 and tick.bid == self._prev_bid and bq >= self._prev_bq:
+                iceberg = 1.0
+            elif da < 0 and tick.ask == self._prev_ask and aq >= self._prev_aq:
+                iceberg = 1.0
+        iceberg_indicator = iceberg
+
+        # 9. Aggressive trade bursts
+        self._ewma_aggressive_burst = self._trade_alpha * (abs(db) + abs(da)) + (1 - self._trade_alpha) * self._ewma_aggressive_burst
+        aggressive_burst = self._ewma_aggressive_burst
+
+        # 10. Order flow persistence
+        self._ewma_of_persistence = self._trade_alpha * (db - da) + (1 - self._trade_alpha) * self._ewma_of_persistence
+        of_persistence = self._ewma_of_persistence
+
+        # 11. Volatility clustering
+        vol_short = float(np.std(self._vol_short_window)) if len(self._vol_short_window) > 1 else 0.0
+        vol_long = float(np.std(self._vol_long_window)) if len(self._vol_long_window) > 1 else 0.0
+        vol_clustering = vol_short / (vol_long + _EPS)
+
+        # Update previous tick variables
+        self._prev_bid = tick.bid
+        self._prev_ask = tick.ask
+        self._prev_bq = bq
+        self._prev_aq = aq
 
         return FeatureRecord(
             t=tick.t,
@@ -193,9 +284,9 @@ class FeaturePipeline:
             bid=tick.bid,
             ask=tick.ask,
             midprice=midprice,
-            spread=tick.spread,
-            bq=tick.bq,
-            aq=tick.aq,
+            spread=spread,
+            bq=bq,
+            aq=aq,
             imbalance=tick.imbalance,
             microprice=microprice,
             microprice_slope=microprice_slope,
@@ -207,6 +298,17 @@ class FeaturePipeline:
             realised_vol=realised_vol,
             liquidity_thin=liquidity_thin,
             momentum=momentum,
+            imbalance_5=imbalance_5,
+            imbalance_vel=imbalance_vel,
+            microprice_acc=microprice_acc,
+            spread_ratio=spread_ratio,
+            liquidity_vacuum=liquidity_vacuum,
+            queue_depletion=queue_depletion,
+            replenishment=replenishment,
+            iceberg_indicator=iceberg_indicator,
+            aggressive_burst=aggressive_burst,
+            of_persistence=of_persistence,
+            vol_clustering=vol_clustering,
         )
 
     @property

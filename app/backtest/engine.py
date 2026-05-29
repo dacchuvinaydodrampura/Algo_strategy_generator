@@ -38,6 +38,49 @@ from app.utils.log_setup import get_logger
 logger = get_logger(__name__)
 
 
+def _simulate_sweep_fill(
+    row: pd.Series,
+    direction: PatternDirection,
+    size: float,
+    tick_size: float,
+    is_exit: bool = False,
+) -> float:
+    """
+    Simulates sweeping the order book levels 1-5 to compute a volume-weighted fill price.
+    For entries:
+        LONG buys from ASK side (ap1..ap5, aq1..aq5)
+        SHORT sells to BID side (bp1..bp5, bq1..bq5)
+    For exits:
+        LONG sells to BID side (bp1..bp5, bq1..bq5)
+        SHORT buys from ASK side (ap1..ap5, aq1..aq5)
+    """
+    is_buying = (direction == PatternDirection.LONG and not is_exit) or (direction == PatternDirection.SHORT and is_exit)
+    prefix = "a" if is_buying else "b"
+
+    total_val = 0.0
+    remaining = size
+
+    for i in range(1, 6):
+        p_val = getattr(row, f"{prefix}p{i}", None)
+        q_val = getattr(row, f"{prefix}q{i}", None)
+        if p_val is None or q_val is None or math.isnan(p_val) or math.isnan(q_val) or q_val <= 0:
+            break
+        take = min(remaining, q_val)
+        total_val += p_val * take
+        remaining -= take
+        if remaining <= 0:
+            break
+
+    if remaining > 0:
+        # Fallback to touch price with a 5-tick penalty for remaining size
+        touch_p = getattr(row, f"{prefix}p1", row["ask"] if is_buying else row["bid"])
+        penalty = 5.0 * tick_size
+        avg_p = touch_p + penalty if is_buying else touch_p - penalty
+        total_val += avg_p * remaining
+
+    return total_val / size
+
+
 class BacktestEngine:
     """
     Simulates all trades for a list of PatternCandidates against tick data.
@@ -82,14 +125,22 @@ class BacktestEngine:
             return result
 
         trades: list[TradeResult] = []
+        last_exit_idx = -999999
 
         for win_idx in candidate.matched_windows:
             if win_idx >= len(windows):
                 continue
             window = windows[win_idx]
-            trade = self._simulate_trade(window, features_df, oos_start_t)
+
+            # Cooldown check
+            if window.start_idx < last_exit_idx + self._cfg.cooldown_ticks:
+                continue
+
+            trade = self._simulate_trade(window, candidate.direction, features_df, oos_start_t)
             if trade is not None:
                 trades.append(trade)
+                # Enforce cooldown using actual holding ticks
+                last_exit_idx = window.start_idx + trade.hold_ticks
 
         result.trades = trades
         result.sample_count = len(trades)
@@ -100,15 +151,20 @@ class BacktestEngine:
     def _simulate_trade(
         self,
         window: TickWindow,
+        direction: PatternDirection,
         features_df: pd.DataFrame,
         oos_start_t: int,
     ) -> Optional[TradeResult]:
         """
-        Simulate a single trade starting at the end of the given window.
+        Simulate a single trade starting at the end of the given window in specified direction.
         Returns TradeResult or None if no valid entry was found.
         """
         cfg = self._cfg
         tick_size = cfg.tick_size
+
+        # Session boundaries check
+        session_start_t = int(features_df["t"].iloc[0])
+        session_end_t = int(features_df["t"].iloc[-1])
 
         # Entry: first tick after window end + latency
         entry_min_t = window.end_t + cfg.latency_ms
@@ -120,9 +176,14 @@ class BacktestEngine:
             return None
 
         entry_row = after_window.iloc[0]
-        direction = window.features[-1].imbalance > 0  # use last tick imbalance
-        # Direction is set by the PatternCandidate, not recomputed here.
-        # We use window's pattern direction context passed in via candidate.
+        entry_t_start = int(entry_row["t"])
+
+        # Exclude entries near session boundaries (within 10 minutes)
+        # Only apply if session duration is substantial (e.g. > 1 hour)
+        session_duration = session_end_t - session_start_t
+        if session_duration > 60 * 60 * 1000:
+            if entry_t_start < session_start_t + 10 * 60 * 1000 or entry_t_start > session_end_t - 10 * 60 * 1000:
+                return None
 
         # Determine stop and target distances in price units
         vol = float(entry_row["realised_vol"])
@@ -140,19 +201,73 @@ class BacktestEngine:
             stop_distance = cfg.default_stop_ticks * tick_size
             target_distance = cfg.default_target_ticks * tick_size
 
-        # Entry price with slippage
-        if _get_direction_from_window(window) == PatternDirection.LONG:
-            raw_entry = float(entry_row["ask"])
-            entry_price = raw_entry + cfg.slippage_ticks * tick_size
+        # Entry execution
+        if cfg.entry_order_type == "limit":
+            # Place limit order at best touch price (bid for LONG, ask for SHORT)
+            limit_price = float(entry_row["bid"]) if direction == PatternDirection.LONG else float(entry_row["ask"])
+            queue_pos = (float(entry_row["bq"]) if direction == PatternDirection.LONG else float(entry_row["aq"])) * cfg.queue_position_multiplier
+
+            filled = False
+            entry_price = limit_price
+            entry_t = entry_t_start
+
+            # Walk future ticks to simulate limit fill
+            limit_holding = features_df[features_df["t"] >= entry_t_start]
+            for _, row in limit_holding.iterrows():
+                t = int(row["t"])
+                bid = float(row["bid"])
+                ask = float(row["ask"])
+                db = float(row["db"] or 0.0)
+                da = float(row["da"] or 0.0)
+
+                # Check limit order timeout
+                if (t - entry_t_start) > cfg.limit_order_timeout_seconds * 1000:
+                    break
+
+                # Queue and price checks
+                if direction == PatternDirection.LONG:
+                    if ask <= limit_price:
+                        filled = True
+                        entry_t = t
+                        break
+                    if bid > limit_price:
+                        break  # price moved away, cancel
+                    if bid == limit_price:
+                        queue_pos -= max(0.0, -db)
+                        if queue_pos <= 0.0:
+                            filled = True
+                            entry_t = t
+                            break
+                else:  # SHORT
+                    if bid >= limit_price:
+                        filled = True
+                        entry_t = t
+                        break
+                    if ask < limit_price:
+                        break  # price moved away, cancel
+                    if ask == limit_price:
+                        queue_pos -= max(0.0, -da)
+                        if queue_pos <= 0.0:
+                            filled = True
+                            entry_t = t
+                            break
+
+            if not filled:
+                return None  # entry unfilled, skip trade
+
+        else:  # market order: sweeps order book levels instantly
+            entry_price = _simulate_sweep_fill(entry_row, direction, cfg.lot_size, tick_size, is_exit=False)
+            entry_price = entry_price + (cfg.slippage_ticks * tick_size if direction == PatternDirection.LONG else -cfg.slippage_ticks * tick_size)
+            entry_t = entry_t_start
+
+        # Stop and target prices from entry price
+        if direction == PatternDirection.LONG:
             stop_price = entry_price - stop_distance
             target_price = entry_price + target_distance
         else:
-            raw_entry = float(entry_row["bid"])
-            entry_price = raw_entry - cfg.slippage_ticks * tick_size
             stop_price = entry_price + stop_distance
             target_price = entry_price - target_distance
 
-        entry_t = int(entry_row["t"])
         max_exit_t = entry_t + cfg.max_hold_seconds * 1000
 
         # Walk ticks forward looking for exit
@@ -165,44 +280,46 @@ class BacktestEngine:
         for _, row in holding.iterrows():
             hold_ticks += 1
             t = int(row["t"])
-            mid = float(row["midprice"])
             bid = float(row["bid"])
             ask = float(row["ask"])
 
-            # Use mid for hit evaluation (conservative)
-            if _get_direction_from_window(window) == PatternDirection.LONG:
-                check_price = bid  # conservative fill for long exit
+            if direction == PatternDirection.LONG:
+                check_price = bid  # conservative exit bid
                 if check_price >= target_price:
-                    exit_price = target_price
+                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = max(target_price, exit_price)
                     exit_t = t
                     exit_reason = "TARGET"
                     break
                 if check_price <= stop_price:
-                    exit_price = stop_price
+                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = min(stop_price, exit_price)
                     exit_t = t
                     exit_reason = "STOP"
                     break
             else:
                 check_price = ask
                 if check_price <= target_price:
-                    exit_price = target_price
+                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = min(target_price, exit_price)
                     exit_t = t
                     exit_reason = "TARGET"
                     break
                 if check_price >= stop_price:
-                    exit_price = stop_price
+                    exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
+                    exit_price = max(stop_price, exit_price)
                     exit_t = t
                     exit_reason = "STOP"
                     break
 
             if t >= max_exit_t:
-                exit_price = bid if _get_direction_from_window(window) == PatternDirection.LONG else ask
+                exit_price = _simulate_sweep_fill(row, direction, cfg.lot_size, tick_size, is_exit=True)
                 exit_t = t
                 exit_reason = "TIMEOUT"
                 break
 
         # Compute PnL
-        if _get_direction_from_window(window) == PatternDirection.LONG:
+        if direction == PatternDirection.LONG:
             gross_pnl = (exit_price - entry_price) * cfg.lot_size
         else:
             gross_pnl = (entry_price - exit_price) * cfg.lot_size
@@ -216,7 +333,7 @@ class BacktestEngine:
             symbol=window.symbol,
             entry_t=entry_t,
             exit_t=exit_t,
-            direction=_get_direction_from_window(window),
+            direction=direction,
             entry_price=entry_price,
             exit_price=exit_price,
             stop_price=stop_price,

@@ -44,6 +44,17 @@ _RULE_FEATURES = [
     "mean_relative_spread",
     "mean_depth_ratio",
     "mean_realised_vol",
+    "mean_imbalance_5",
+    "mean_imbalance_vel",
+    "mean_microprice_acc",
+    "mean_spread_ratio",
+    "mean_liquidity_vacuum",
+    "mean_queue_depletion",
+    "mean_replenishment",
+    "mean_iceberg_indicator",
+    "mean_aggressive_burst",
+    "mean_of_persistence",
+    "mean_vol_clustering",
 ]
 
 # Quantile thresholds tested for each feature
@@ -63,6 +74,17 @@ class _WindowRow:
     mean_relative_spread: float
     mean_depth_ratio: float
     mean_realised_vol: float
+    mean_imbalance_5: float
+    mean_imbalance_vel: float
+    mean_microprice_acc: float
+    mean_spread_ratio: float
+    mean_liquidity_vacuum: float
+    mean_queue_depletion: float
+    mean_replenishment: float
+    mean_iceberg_indicator: float
+    mean_aggressive_burst: float
+    mean_of_persistence: float
+    mean_vol_clustering: float
     forward_return: float      # microprice change after window (label)
     is_oos: bool
 
@@ -87,6 +109,17 @@ def _windows_to_df(
             mean_relative_spread=w.mean_relative_spread,
             mean_depth_ratio=w.mean_depth_ratio,
             mean_realised_vol=w.mean_realised_vol,
+            mean_imbalance_5=getattr(w, "mean_imbalance_5", 0.0),
+            mean_imbalance_vel=getattr(w, "mean_imbalance_vel", 0.0),
+            mean_microprice_acc=getattr(w, "mean_microprice_acc", 0.0),
+            mean_spread_ratio=getattr(w, "mean_spread_ratio", 0.0),
+            mean_liquidity_vacuum=getattr(w, "mean_liquidity_vacuum", 0.0),
+            mean_queue_depletion=getattr(w, "mean_queue_depletion", 0.0),
+            mean_replenishment=getattr(w, "mean_replenishment", 0.0),
+            mean_iceberg_indicator=getattr(w, "mean_iceberg_indicator", 0.0),
+            mean_aggressive_burst=getattr(w, "mean_aggressive_burst", 0.0),
+            mean_of_persistence=getattr(w, "mean_of_persistence", 0.0),
+            mean_vol_clustering=getattr(w, "mean_vol_clustering", 0.0),
             forward_return=0.0,   # filled below
             is_oos=w.start_t >= oos_start_t,
         ))

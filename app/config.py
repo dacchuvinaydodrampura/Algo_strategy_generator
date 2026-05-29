@@ -86,6 +86,9 @@ class PatternsConfig(BaseModel):
     clustering_n_clusters: int = 8
     stability_cv_threshold: float = 0.35
     oos_split_fraction: float = 0.30
+    min_multi_day_sessions: int = 3
+    max_multi_day_sessions: int = 5
+    mc_trials: int = 50
 
 
 class BacktestConfig(BaseModel):
@@ -101,6 +104,10 @@ class BacktestConfig(BaseModel):
     use_dynamic_stops: bool = False
     stop_vol_multiplier: float = 3.0
     target_vol_multiplier: float = 6.0
+    entry_order_type: str = "market"  # limit | market
+    queue_position_multiplier: float = 1.0
+    limit_order_timeout_seconds: float = 10.0
+    cooldown_ticks: int = 50
 
 
 class ReportConfig(BaseModel):

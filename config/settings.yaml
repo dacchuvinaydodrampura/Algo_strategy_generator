@@ -57,6 +57,6 @@ backtest:
 
 report:
   pdf_page_size: "A4"
-  logo_path: null               # optional: path to logo image
+  logo_path: "C:\\Users\\Vinay\\Downloads\\Picsart_26-05-16_04-46-46-003.jpg"               # optional: path to logo image
   max_example_windows: 5        # how many matched examples to embed
   author: "Market Research Engine v1.0"

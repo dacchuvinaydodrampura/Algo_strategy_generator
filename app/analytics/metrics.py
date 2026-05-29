@@ -22,6 +22,7 @@ import pandas as pd
 from app.config import BacktestConfig, PatternsConfig
 from app.models.session import BacktestResult, PatternDirection, TradeResult
 from app.utils.log_setup import get_logger
+from app.analytics.validation import run_monte_carlo_test, run_sensitivity_test, run_multi_day_test
 
 logger = get_logger(__name__)
 
@@ -77,6 +78,26 @@ def populate_metrics(
     # ── Stability (CV of win rate across time buckets) ────────────────────────
     result.win_rate_cv = _stability_cv(is_trades, result.direction)
     result.is_stable = result.win_rate_cv <= patterns_cfg.stability_cv_threshold
+
+    # ── Advanced Statistical Validation Checks ──────────────────────────────
+    # Monte Carlo simulation
+    result.mc_pass = run_monte_carlo_test(
+        trades=is_trades,
+        trials=patterns_cfg.mc_trials,
+        min_win_rate=patterns_cfg.min_win_rate,
+    )
+    # Sensitivity analysis
+    result.sensitivity_pass = run_sensitivity_test(
+        trades=is_trades,
+        tick_size=bt_cfg.tick_size,
+        lot_size=bt_cfg.lot_size,
+    )
+    # Multi-day cross stability (assesses inter-day consistency on all trades)
+    result.multi_day_pass = run_multi_day_test(
+        trades=all_trades,
+        stability_cv_threshold=patterns_cfg.stability_cv_threshold,
+        min_sessions=patterns_cfg.min_multi_day_sessions,
+    )
 
     # ── Verdict ───────────────────────────────────────────────────────────────
     result.verdict, result.rejection_reason = _compute_verdict(
@@ -215,6 +236,16 @@ def _compute_verdict(
             "REJECTED",
             f"Profit factor {result.profit_factor:.2f} < threshold {cfg.min_profit_factor:.2f}",
         )
+
+    # Rejection based on validation failure
+    if not result.mc_pass:
+        return "REJECTED", "Failed Monte Carlo robustness test"
+
+    if not result.sensitivity_pass:
+        return "REJECTED", "Failed parameter sensitivity analysis"
+
+    if not result.multi_day_pass:
+        return "REJECTED", "Failed multi-day consistency check"
 
     if not result.is_stable:
         return (

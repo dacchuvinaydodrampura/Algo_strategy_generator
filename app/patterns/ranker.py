@@ -133,6 +133,9 @@ def rank_and_deduplicate(
         pf_score = max(0.0, pf - cfg.min_profit_factor) / (3.0 - cfg.min_profit_factor + 1e-9)
 
         composite = 0.4 * sample_score + 0.4 * wr_score + 0.2 * pf_score
+        # Penalty for rule complexity to prevent overfitting
+        complexity_penalty = 0.05 * max(0, len(c.rules) - 1)
+        composite -= complexity_penalty
         scored.append(_ScoredCandidate(candidate=c, score=composite))
 
     # ── Sort descending by score ──────────────────────────────────────────────

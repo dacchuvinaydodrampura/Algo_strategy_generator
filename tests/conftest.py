@@ -141,6 +141,17 @@ def make_feature_record(
         realised_vol=realised_vol,
         liquidity_thin=0.0,
         momentum=microprice_slope ** 2,
+        imbalance_5=imbalance,
+        imbalance_vel=0.0,
+        microprice_acc=0.0,
+        spread_ratio=1.0,
+        liquidity_vacuum=0.0,
+        queue_depletion=0.0,
+        replenishment=0.0,
+        iceberg_indicator=0.0,
+        aggressive_burst=aggression_score,
+        of_persistence=0.0,
+        vol_clustering=1.0,
     )
 
 

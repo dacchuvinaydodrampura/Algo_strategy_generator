@@ -95,6 +95,17 @@ class FeatureRecord:
     realised_vol: float             # std of microprice changes over window
     liquidity_thin: float           # 1 if total depth < threshold else 0
     momentum: float                 # sign of microprice slope * magnitude
+    imbalance_5: float
+    imbalance_vel: float
+    microprice_acc: float
+    spread_ratio: float
+    liquidity_vacuum: float
+    queue_depletion: float
+    replenishment: float
+    iceberg_indicator: float
+    aggressive_burst: float
+    of_persistence: float
+    vol_clustering: float
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -126,6 +137,17 @@ class TickWindow:
     mean_realised_vol: float = 0.0
     entry_microprice: float = 0.0
     exit_microprice: float = 0.0
+    mean_imbalance_5: float = 0.0
+    mean_imbalance_vel: float = 0.0
+    mean_microprice_acc: float = 0.0
+    mean_spread_ratio: float = 0.0
+    mean_liquidity_vacuum: float = 0.0
+    mean_queue_depletion: float = 0.0
+    mean_replenishment: float = 0.0
+    mean_iceberg_indicator: float = 0.0
+    mean_aggressive_burst: float = 0.0
+    mean_of_persistence: float = 0.0
+    mean_vol_clustering: float = 0.0
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -244,5 +266,8 @@ class BacktestResult:
     # Stability
     win_rate_cv: float = 0.0        # coefficient of variation across time buckets
     is_stable: bool = False
+    mc_pass: bool = False
+    sensitivity_pass: bool = False
+    multi_day_pass: bool = False
     verdict: str = "REJECTED"       # "ACCEPTED" | "MARGINAL" | "REJECTED"
     rejection_reason: str = ""

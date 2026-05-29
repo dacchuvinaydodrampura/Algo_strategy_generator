@@ -46,6 +46,17 @@ def _summarise_window(
     rel_spreads = [f.relative_spread for f in features]
     depth_ratios = [f.depth_ratio for f in features]
     vols = [f.realised_vol for f in features]
+    imbalances_5 = [f.imbalance_5 for f in features]
+    imbalance_vels = [f.imbalance_vel for f in features]
+    microprice_accs = [f.microprice_acc for f in features]
+    spread_ratios = [f.spread_ratio for f in features]
+    liquidity_vacuums = [f.liquidity_vacuum for f in features]
+    queue_depletions = [f.queue_depletion for f in features]
+    replenishments = [f.replenishment for f in features]
+    iceberg_indicators = [f.iceberg_indicator for f in features]
+    aggressive_bursts = [f.aggressive_burst for f in features]
+    of_persistences = [f.of_persistence for f in features]
+    vol_clusterings = [f.vol_clustering for f in features]
 
     return TickWindow(
         symbol=symbol,
@@ -63,6 +74,17 @@ def _summarise_window(
         mean_realised_vol=float(np.mean(vols)),
         entry_microprice=features[0].microprice,
         exit_microprice=features[-1].microprice,
+        mean_imbalance_5=float(np.mean(imbalances_5)),
+        mean_imbalance_vel=float(np.mean(imbalance_vels)),
+        mean_microprice_acc=float(np.mean(microprice_accs)),
+        mean_spread_ratio=float(np.mean(spread_ratios)),
+        mean_liquidity_vacuum=float(np.mean(liquidity_vacuums)),
+        mean_queue_depletion=float(np.mean(queue_depletions)),
+        mean_replenishment=float(np.mean(replenishments)),
+        mean_iceberg_indicator=float(np.mean(iceberg_indicators)),
+        mean_aggressive_burst=float(np.mean(aggressive_bursts)),
+        mean_of_persistence=float(np.mean(of_persistences)),
+        mean_vol_clustering=float(np.mean(vol_clusterings)),
     )
 
 

@@ -266,10 +266,10 @@ def _stage_patterns(
     windows: list[TickWindow],
     settings: Settings,
     symbol: str,
-) -> list[PatternCandidate]:
+) -> tuple[list[PatternCandidate], int]:
     """Run rule mining and clustering to discover pattern candidates."""
     if not windows:
-        return []
+        return [], 0
 
     patterns_cfg = settings.patterns
     oos_start_t = _compute_oos_start(windows, patterns_cfg.oos_split_fraction)
@@ -293,19 +293,72 @@ def _stage_patterns(
     cluster_candidates = cluster_miner.mine(windows, oos_start_t)
     candidates.extend(cluster_candidates)
 
+    # Rank and deduplicate to screen candidates before backtest
+    from app.patterns.ranker import rank_and_deduplicate
+    ranked = rank_and_deduplicate(candidates, windows, oos_start_t, patterns_cfg)
+
     logger.info(
         "stage_patterns_complete",
         symbol=symbol,
         total_candidates=len(candidates),
+        ranked_candidates=len(ranked),
         rule_mining=len(rule_candidates),
         clustering=len(cluster_candidates),
     )
-    return candidates, oos_start_t
+    return ranked, oos_start_t
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 5: Backtest
 # ──────────────────────────────────────────────────────────────────────────────
+
+
+def _get_historical_session_dates(store: TickStore, current_date: datetime.date, limit: int = 5) -> list[datetime.date]:
+    """Retrieve historical session dates before current_date from MongoDB or DuckDB."""
+    import datetime
+    dates = []
+    if store._mongo_db is not None:
+        try:
+            cursor = store._mongo_db["archive_manifests"].find({}, {"session_date": 1})
+            for doc in cursor:
+                try:
+                    d = datetime.date.fromisoformat(doc["session_date"])
+                    if d < current_date:
+                        dates.append(d)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.warning("failed_to_fetch_mongo_session_dates", error=str(e))
+    elif store._conn is not None:
+        try:
+            rows = store.conn.execute("SELECT session_date FROM archive_manifests").fetchall()
+            for r in rows:
+                try:
+                    d = datetime.date.fromisoformat(str(r[0]))
+                    if d < current_date:
+                        dates.append(d)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.warning("failed_to_fetch_duckdb_session_dates", error=str(e))
+    dates = list(set(dates))  # deduplicate
+    dates.sort(reverse=True)
+    return dates[:limit]
+
+
+def _find_matched_windows_for_rules(rules: list[PatternRule], windows: list[TickWindow]) -> list[int]:
+    """Find indices of windows that satisfy all pattern rules."""
+    matched = []
+    for idx, win in enumerate(windows):
+        match = True
+        for rule in rules:
+            val = getattr(win, rule.feature, None)
+            if val is None or not rule.matches(val):
+                match = False
+                break
+        if match:
+            matched.append(idx)
+    return matched
 
 
 def _stage_backtest(
@@ -317,7 +370,7 @@ def _stage_backtest(
     store: TickStore,
     session_date: datetime.date,
 ) -> list[BacktestResult]:
-    """Backtest all candidates and compute analytics metrics."""
+    """Backtest all candidates and compute analytics metrics across current and historical sessions."""
     import dataclasses
     import pandas as pd
 
@@ -327,7 +380,32 @@ def _stage_backtest(
     bt_cfg = settings.backtest
     patterns_cfg = settings.patterns
 
-    # Build features DataFrame once (shared across all pattern backtests)
+    # 1. Fetch historical session features and windows
+    hist_dates = _get_historical_session_dates(store, session_date, patterns_cfg.max_multi_day_sessions)
+    logger.info("stage_backtest_historical_sessions_found", dates=[d.isoformat() for d in hist_dates])
+
+    hist_sessions_data = []
+    symbol = candidates[0].symbol if candidates else ""
+
+    for h_date in hist_dates:
+        try:
+            h_df = store.load_features(h_date, symbol)
+            if h_df.empty:
+                continue
+            h_features = []
+            for row in h_df.itertuples(index=False):
+                h_features.append(FeatureRecord(**row._asdict()))
+            h_windows = _stage_windows(h_features, settings, symbol)
+            hist_sessions_data.append({
+                "date": h_date,
+                "windows": h_windows,
+                "df": h_df,
+            })
+            logger.info("loaded_historical_session", date=h_date.isoformat(), windows=len(h_windows))
+        except Exception as e:
+            logger.warning("failed_to_load_historical_session", date=h_date.isoformat(), error=str(e))
+
+    # Build current day features DataFrame
     features_data = [dataclasses.asdict(f) for f in features]
     features_df = pd.DataFrame(features_data)
 
@@ -338,12 +416,36 @@ def _stage_backtest(
 
     for candidate in candidates:
         try:
+            # Backtest on current session (with IS/OOS split)
             result = engine.run(candidate, windows, features_df, oos_start_t)
-            result = populate_metrics(result, patterns_cfg, bt_cfg)
 
-            # Set pattern_id on each trade (engine doesn't have access to candidate)
+            # Set pattern ID on current day's trades
             for trade in result.trades:
                 trade.pattern_id = candidate.pattern_id
+
+            # Backtest on historical sessions (all trades marked as OOS)
+            for h_sess in hist_sessions_data:
+                h_matched = _find_matched_windows_for_rules(candidate.rules, h_sess["windows"])
+                if not h_matched:
+                    continue
+                h_candidate = PatternCandidate(
+                    pattern_id=candidate.pattern_id,
+                    symbol=candidate.symbol,
+                    direction=candidate.direction,
+                    rules=candidate.rules,
+                    matched_windows=h_matched,
+                    sample_count=len(h_matched),
+                )
+                h_res = engine.run(h_candidate, h_sess["windows"], h_sess["df"], oos_start_t=0)
+
+                # Append historical trades, forcing OOS flag to True
+                for h_trade in h_res.trades:
+                    h_trade.pattern_id = candidate.pattern_id
+                    h_trade.is_oos = True
+                    result.trades.append(h_trade)
+
+            # Re-evaluate metrics across all aggregated trades
+            result = populate_metrics(result, patterns_cfg, bt_cfg)
 
             results.append(result)
             store.save_backtest_result(session_date, result)
